@@ -8,7 +8,7 @@ class AnimatedHeart extends SpriteAnimationComponent with HasGameReference<Pixel
 
   AnimatedHeart({super.position, required this.isFull});
 
-  final double stepTime = 0.05;
+  final double stepTime = 0.1;
   final int amount = 8;
   final Vector2 textureSize = Vector2.all(32);
 

@@ -21,12 +21,15 @@ class PixelGame extends FlameGame
   Color backgroundColor() => const Color(0xFF211F30);
   late CameraComponent cam;
   late JoystickComponent joystick;
+  Level? currentLevel;
+  CameraComponent? currentCamera;
   bool showControls = false; // TODO: be able to flip in settings
   bool playSounds = true; // TODO: be able to flip in settings
   double soundVolume = 0.05; // TODO: be able to set in settings
   List<String> levels = ['level_01', 'level_02', 'level_03']; // add more levels later
   int currentLevelIndex = 0; // TODO: be able to pick level
-  Player player = Player(character: 'Chef'); //TODO: get character from level property
+  late Player player;
+  
   @override
   FutureOr<void> onLoad() async {   
     await images.loadAllImages(); // use loadAll if you have many images for optimization
@@ -99,24 +102,39 @@ class PixelGame extends FlameGame
     }
   }
   
-  void _loadLevel() {
-    Future.delayed(const Duration(seconds: 1), () {
+  void _loadLevel() async {
+    Future.delayed(const Duration(seconds: 1), () async {
+      // remove old level
+      currentLevel?.removeFromParent();
+      currentCamera?.removeFromParent();
+
       Level world = Level(
-        levelName: levels[currentLevelIndex], 
-        player: player
+        levelName: levels[currentLevelIndex]
       );
+      currentLevel = world;
       
+      //TODO: actually make the resolution fixed??
       cam = CameraComponent.withFixedResolution(
         world: world, 
         width: 640, 
         height: 360
       );
       cam.viewfinder.anchor = Anchor.topLeft;
-
-      HealthBar health = HealthBar(player: player)..position = Vector2(60, 5);
-      cam.viewport.add(health);
+      currentCamera = cam;
 
       addAll([cam, world]);
+
+      await Future.delayed(Duration(milliseconds: 100));
     });
   }
+
+  void setPlayer(Player newPlayer) {
+    player = newPlayer;
+
+    // refresh health bar
+    cam.viewport.removeWhere((component) => component is HealthBar);
+    final health = HealthBar(player: player)..position = Vector2(60, 5);
+    cam.viewport.add(health);
+  }
+  
 }

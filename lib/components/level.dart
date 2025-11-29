@@ -7,15 +7,15 @@ import 'package:platformer/components/collision_block.dart';
 import 'package:platformer/components/heal.dart';
 import 'package:platformer/components/player.dart';
 import 'package:platformer/components/saw.dart';
+import 'package:platformer/components/shaker.dart';
 import 'package:platformer/pixel_game.dart';
 
 
 class Level extends World with HasGameReference<PixelGame> {
   final String levelName;
-  final Player player;
+  late Player player;
   Level({
-    required this.levelName, 
-    required this.player,
+    required this.levelName,
   });
   late TiledComponent level;
   List<CollisionBlock> collisionBlocks = [];
@@ -39,13 +39,10 @@ class Level extends World with HasGameReference<PixelGame> {
       final backgroundName = backgroundLayer.properties.getValue('BackgroundImage');
       final background = Background(
         imageName: backgroundName ?? 'Gray',
-        position: Vector2(0, 0), 
-        size: Vector2(
-          level.tileMap.map.width * 16,
-          level.tileMap.map.height * 16,
-        ),
+        position: Vector2.zero(), 
+        size: game.canvasSize,
       );
-      add(background);
+      game.add(background);
     }
   }
   
@@ -56,9 +53,14 @@ class Level extends World with HasGameReference<PixelGame> {
       for (final spawnPoint in spawnPointLayer.objects) {
         switch (spawnPoint.class_){
           case 'Player':
-            player.position = Vector2(spawnPoint.x, spawnPoint.y);
+            player = Player(
+              character: spawnPoint.name,
+              reward: spawnPoint.properties.getValue('reward'),
+              position: Vector2(spawnPoint.x, spawnPoint.y),
+            );
             player.scale.x = 1; // always facing right
             add(player);
+            game.setPlayer(player);
             break;
           case 'Heal':
             final heal = Heal(
@@ -81,16 +83,19 @@ class Level extends World with HasGameReference<PixelGame> {
             add(saw);
             break;
           case 'Chicken':
-            final offsetNeg = spawnPoint.properties.getValue('offsetNeg');
-            final offsetPos = spawnPoint.properties.getValue('offsetPos');
             final chicken = Chicken(
-              position: Vector2(spawnPoint.x, spawnPoint.y - 32),
+              position: Vector2(spawnPoint.x, spawnPoint.y),
               size: Vector2(64, 64),
-              offsetNeg: offsetNeg,
-              offsetPos: offsetPos,
             );
             add(chicken);
             break;
+          case 'Shaker':
+            final shaker = Shaker(
+              shakerName: spawnPoint.name,
+              position: Vector2(spawnPoint.x, spawnPoint.y),
+              size: Vector2(spawnPoint.width, spawnPoint.height),
+            );
+            add(shaker);
           default:
         }
       } 

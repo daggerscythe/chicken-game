@@ -66,10 +66,14 @@ flutter:
     - assets/images/Background/
     - assets/images/Traps/Saw/
     - assets/images/Main Characters/Chef/
+    - assets/images/Main Characters/ChefWithJacket/
+    - assets/images/Main Characters/ChefWithHat/
     - assets/images/Main Characters/Virtual Guy/
     - assets/images/Main Characters/
     - assets/images/HUD/
     - assets/images/Enemies/Chicken/
+    - assets/images/Enemies/Salt/
+    - assets/images/Enemies/Pepper/
     - assets/images/Items/Fruits/
     - assets/images/Items/
     - assets/images/Items/Checkpoints/Checkpoint/

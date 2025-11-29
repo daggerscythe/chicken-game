@@ -19,9 +19,11 @@ enum PlayerState {idle, running, jumping, falling, hit, slashing, appearing, dis
 
 class Player extends SpriteAnimationGroupComponent with HasGameReference<PixelGame>, KeyboardHandler, CollisionCallbacks, TapCallbacks {
   String character;
+  String reward;
   Player({
     position, 
     this.character = 'Virtual Guy',
+    this.reward = 'Chef Jacket',
   }) : super(position: position);
 
   final double stepTime = 0.05;
@@ -64,8 +66,8 @@ class Player extends SpriteAnimationGroupComponent with HasGameReference<PixelGa
 
   @override
   FutureOr<void> onLoad() {
-    _loadAllAnimations(); // underscore makes it private
-    // debugMode = true; // to show player collision
+    _loadAllAnimations();
+    debugMode = true; // to show player collision
     startingPosition = Vector2(position.x, position.y); // get spawn point
     add(RectangleHitbox(
       position: Vector2(hitbox.offsetX, hitbox.offsetY),
@@ -117,7 +119,7 @@ class Player extends SpriteAnimationGroupComponent with HasGameReference<PixelGa
         other.collidedWithPlayer();
         if (currentLives != maxLives) currentLives++;
       }
-      if (other is Saw) _respawn();
+      if (other is Saw) _playerHit();
       if (other is Chicken) other.collidedWithPlayer();
     }
     super.onCollisionStart(intersectionPoints, other);
@@ -285,7 +287,7 @@ class Player extends SpriteAnimationGroupComponent with HasGameReference<PixelGa
       _respawn();
       return;
     }
-
+    
     await animationTicker?.completed;
     animationTicker?.reset();
 
@@ -338,17 +340,15 @@ class Player extends SpriteAnimationGroupComponent with HasGameReference<PixelGa
     removeWhere((component) => component is AttackHitbox); // remove existing hitboxes
 
     final attackHitbox = AttackHitbox(
-      position: Vector2(scale.x > 0 ? hitbox.width : -40, -10),
-      size: Vector2(40, 40),
+      position: Vector2(scale.x > 0 ? hitbox.width : -hitbox.width + 30, 0), // TODO: remove magic number
+      size: Vector2(40, 30),
     );
 
     add (attackHitbox);
   }
   
   void _showCompletionScreen() {
-    Vector2 cameraSize = game.cam.viewport.size;
-    double cameraOffsetX = 150.0;
-    double cameraOffsetY = 100.0;
+    Vector2 cameraCenter = game.cam.viewport.virtualSize / 2;
 
     // pop up screen
     final popUp = SpriteAnimationComponent( 
@@ -360,16 +360,15 @@ class Player extends SpriteAnimationGroupComponent with HasGameReference<PixelGa
           textureSize: Vector2.all(96),
         ),
       ),
-      position: cameraSize / 2 - Vector2(cameraOffsetX, cameraOffsetY), // center of screen
-      // position: cameraSize / 2,
+      position: cameraCenter,
       size: Vector2.all(350),
       anchor: Anchor.center,
     )..priority = 100;
     
     // item
     final item = SpriteComponent(
-      sprite: Sprite(game.images.fromCache('Items/Chef Jacket.png')),
-      position: cameraSize / 2 - Vector2(cameraOffsetX, cameraOffsetY),
+      sprite: Sprite(game.images.fromCache('Items/$reward.png')),
+      position: cameraCenter,
       size: Vector2.all(100),
       anchor: Anchor.center,
     )..priority = 101;
@@ -377,8 +376,8 @@ class Player extends SpriteAnimationGroupComponent with HasGameReference<PixelGa
     final textRenderer = TextPaint(style: TextStyle(fontSize: 16, color: Color.fromARGB(255, 255, 255, 255)));
     // congrats text
     final text = TextComponent(
-      text: "Nice job! You get a Chef's Jacket!",
-      position: cameraSize / 2 - Vector2(cameraOffsetX, cameraOffsetY - 100),
+      text: "Nice job! You get a $reward!",
+      position: cameraCenter - Vector2(0, -100),
       anchor: Anchor.center,
       textRenderer: textRenderer,
     )..priority = 102;
@@ -386,7 +385,7 @@ class Player extends SpriteAnimationGroupComponent with HasGameReference<PixelGa
     // press anything text
     final hintText = TextComponent(
       text: "Press anything to continue",
-      position: cameraSize / 2 - Vector2(cameraOffsetX, cameraOffsetY - 150),
+      position: cameraCenter - Vector2(0, -150),
       anchor: Anchor.center,
       textRenderer: textRenderer,
     )..priority = 102;
@@ -406,7 +405,6 @@ class Player extends SpriteAnimationGroupComponent with HasGameReference<PixelGa
     
     game.add(inputHandler);
   }
-  
 }
 
 class _CompletionInputHandler extends Component with TapCallbacks, KeyboardHandler{
