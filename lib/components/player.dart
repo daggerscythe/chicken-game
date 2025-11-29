@@ -1,9 +1,12 @@
 import 'dart:async';
+import 'dart:ui';
 import 'package:flame/collisions.dart';
 import 'package:flame/components.dart';
+import 'package:flame/events.dart';
+import 'package:flame/text.dart';
 import 'package:flame_audio/flame_audio.dart';
 import 'package:flutter/services.dart';
-import 'package:platformer/components/checkpoint.dart';
+import 'package:platformer/components/attack_hitbox.dart';
 import 'package:platformer/components/chicken.dart';
 import 'package:platformer/components/collision_block.dart';
 import 'package:platformer/components/custom_hitbox.dart';
@@ -12,9 +15,9 @@ import 'package:platformer/components/saw.dart';
 import 'package:platformer/components/utils.dart';
 import 'package:platformer/pixel_game.dart';
 
-enum PlayerState {idle, running, jumping, falling, hit, appearing, disappearing}
+enum PlayerState {idle, running, jumping, falling, hit, slashing, appearing, disappearing}
 
-class Player extends SpriteAnimationGroupComponent with HasGameReference<PixelGame>, KeyboardHandler, CollisionCallbacks {
+class Player extends SpriteAnimationGroupComponent with HasGameReference<PixelGame>, KeyboardHandler, CollisionCallbacks, TapCallbacks {
   String character;
   Player({
     position, 
@@ -28,6 +31,7 @@ class Player extends SpriteAnimationGroupComponent with HasGameReference<PixelGa
   late final SpriteAnimation jumpingAnimation;
   late final SpriteAnimation fallingAnimation;
   late final SpriteAnimation hitAnimation;
+  late final SpriteAnimation slashingAnimation;
   late final SpriteAnimation appearingAnimation;
   late final SpriteAnimation disappearingAnimation;
 
@@ -44,8 +48,9 @@ class Player extends SpriteAnimationGroupComponent with HasGameReference<PixelGa
   bool isOnGround = false;
   bool hasJumped = false;
   bool dead = false;
-  bool reachedCheckpoint= false;
+  bool defeatedBoss= false;
   bool recentlyHit = false;
+  bool attacking = false;
   List<CollisionBlock> collisionBlocks = [];
   CustomHitbox hitbox = CustomHitbox(
     offsetX: 10, 
@@ -74,7 +79,7 @@ class Player extends SpriteAnimationGroupComponent with HasGameReference<PixelGa
     accumulatedTime += dt;
 
     while (accumulatedTime >= fixedDeltaTime) {
-      if (!dead && !reachedCheckpoint) {
+      if (!dead && !defeatedBoss) {
         _updatePlayerState();
         _updatePlayerMovement(fixedDeltaTime);
         _checkHorizontalCollisions(); // important to check gravity AFTER hor. collision
@@ -94,34 +99,39 @@ class Player extends SpriteAnimationGroupComponent with HasGameReference<PixelGa
       || keysPressed.contains(LogicalKeyboardKey.arrowLeft);
     final isRightKeyPressed = keysPressed.contains(LogicalKeyboardKey.keyD) 
       || keysPressed.contains(LogicalKeyboardKey.arrowRight);
-    
+
     horizontalMovement += isLeftKeyPressed ? -1 : 0;
     horizontalMovement += isRightKeyPressed ? 1 : 0;
 
     hasJumped = keysPressed.contains(LogicalKeyboardKey.space);
-    
+    attacking = keysPressed.contains(LogicalKeyboardKey.keyE)
+      || keysPressed.contains(LogicalKeyboardKey.enter);
+
     return super.onKeyEvent(event, keysPressed);
   }
 
   @override
   void onCollisionStart(Set<Vector2> intersectionPoints, PositionComponent other) {
-    if (!reachedCheckpoint) {
-      if (other is Heal) other.collidedWithPlayer();
+    if (!defeatedBoss) {
+      if (other is Heal){
+        other.collidedWithPlayer();
+        if (currentLives != maxLives) currentLives++;
+      }
       if (other is Saw) _respawn();
       if (other is Chicken) other.collidedWithPlayer();
-      if (other is Checkpoint && !reachedCheckpoint) _reachedCheckpoint();
     }
     super.onCollisionStart(intersectionPoints, other);
   }
 
   void _loadAllAnimations() {
-    idleAnimation = _spriteAnimation('Idle', 11);
-    runningAnimation = _spriteAnimation('Run', 12);
-    jumpingAnimation = _spriteAnimation('Jump', 1);
-    fallingAnimation = _spriteAnimation('Fall', 1);
-    hitAnimation = _spriteAnimation('Hit', 7)..loop = false; // only plays once
-    appearingAnimation = _specialSpriteAnimation('Appearing', 7);
-    disappearingAnimation = _specialSpriteAnimation('Disappearing', 7);
+    idleAnimation = _spriteAnimation('Idle', 11, 32, 32);
+    runningAnimation = _spriteAnimation('Run', 12, 32, 32);
+    jumpingAnimation = _spriteAnimation('Jump', 1, 32, 32);
+    fallingAnimation = _spriteAnimation('Fall', 1, 32, 32);
+    hitAnimation = _spriteAnimation('Hit', 7, 32, 32)..loop = false; // only plays once
+    slashingAnimation = _spriteAnimation('Slash', 9, 64, 32)..loop = false; // only plays once
+    appearingAnimation = _spriteAnimation('Appearing', 7, 96, 96)..loop = false;
+    disappearingAnimation = _spriteAnimation('Disappearing', 7, 96, 96)..loop = false;
     
     animations = {
       PlayerState.idle: idleAnimation,
@@ -129,6 +139,7 @@ class Player extends SpriteAnimationGroupComponent with HasGameReference<PixelGa
       PlayerState.jumping: jumpingAnimation,
       PlayerState.falling: fallingAnimation,
       PlayerState.hit: hitAnimation,
+      PlayerState.slashing: slashingAnimation,
       PlayerState.appearing: appearingAnimation,
       PlayerState.disappearing: disappearingAnimation,
     };
@@ -137,22 +148,13 @@ class Player extends SpriteAnimationGroupComponent with HasGameReference<PixelGa
     current = PlayerState.idle;
   }
   
-  SpriteAnimation _spriteAnimation(String state, int amount) {
+  SpriteAnimation _spriteAnimation(String state, int amount, int width, int height) {
     return SpriteAnimation.fromFrameData(
-      game.images.fromCache('Main Characters/$character/$state (32x32).png'), 
-        SpriteAnimationData.sequenced(amount: amount, stepTime: stepTime, textureSize: Vector2.all(32)
-      )
-    );
-  }
-
-  SpriteAnimation _specialSpriteAnimation(String state, int amount) {
-    return SpriteAnimation.fromFrameData(
-      game.images.fromCache('Main Characters/$state (96x96).png'), 
+      game.images.fromCache('Main Characters/$character/$state (${width}x$height).png'), 
         SpriteAnimationData.sequenced(
           amount: amount, 
           stepTime: stepTime, 
-          textureSize: Vector2.all(96),
-          loop: false,
+          textureSize: Vector2(width.toDouble(), height.toDouble()),
       )
     );
   }
@@ -160,6 +162,18 @@ class Player extends SpriteAnimationGroupComponent with HasGameReference<PixelGa
   void _updatePlayerState() {
     PlayerState playerState = PlayerState.idle;
 
+    // wait for attack animation to finish
+    if (current == PlayerState.slashing && !(animationTicker?.isLastFrame ?? true)) {
+      return;
+    }
+
+    if (attacking) {
+      if (game.playSounds) FlameAudio.play('slash.wav', volume: game.soundVolume);
+      current = PlayerState.slashing;
+      _createAttackHitbox(); //TODO: make it so that it removes htibox afterwards
+      return;
+    }
+    
     // flip depending on direction
     if (velocity.x < 0 && scale.x > 0) {
       flipHorizontallyAroundCenter();
@@ -180,8 +194,17 @@ class Player extends SpriteAnimationGroupComponent with HasGameReference<PixelGa
   }
   
   void _updatePlayerMovement(double dt) {
+    // cant move during attacking
+    if (current == PlayerState.slashing) {
+      velocity.x = 0;
+      attacking = false;
+      return;
+    }
+    // can only jump on ground
     if (hasJumped && isOnGround) _playerJump(dt);
+    // can only move when not recently hit
     if (!recentlyHit) velocity.x = horizontalMovement * moveSpeed;
+    
     position.x += velocity.x * dt;
   }
 
@@ -286,9 +309,10 @@ class Player extends SpriteAnimationGroupComponent with HasGameReference<PixelGa
     Future.delayed(canMoveDuration, () => dead = false); // player can't move immediately after respawning
   }
   
-  void _reachedCheckpoint() async {
-    reachedCheckpoint = true;
-    if (game.playSounds) FlameAudio.play('completed.wav', volume: game.soundVolume);
+  void levelComplete() async {
+    defeatedBoss = true;
+    if (game.playSounds) FlameAudio.play('complete.mp3', volume: game.soundVolume);
+
     if (scale.x > 0) { // if facing right
       position = position - Vector2.all(32);
     } else if (scale.x < 0){ // if facing left
@@ -296,15 +320,12 @@ class Player extends SpriteAnimationGroupComponent with HasGameReference<PixelGa
     }
 
     current = PlayerState.disappearing;
-
     await animationTicker?.completed;
     animationTicker?.reset();
 
-    reachedCheckpoint = false;
     position = Vector2.all(-640); // move player offscreen
 
-    const waitToChangeDuration = Duration(milliseconds: 3);
-    Future.delayed(waitToChangeDuration, () => game.loadNextLevel());
+    Future.delayed(const Duration(milliseconds: 500), () => _showCompletionScreen());
   }
 
   void collidedWithEnemy() {
@@ -312,5 +333,107 @@ class Player extends SpriteAnimationGroupComponent with HasGameReference<PixelGa
     recentlyHit = true;
     Future.delayed(canMoveDuration, () => recentlyHit = false);
   }
+  
+  void _createAttackHitbox() {
+    removeWhere((component) => component is AttackHitbox); // remove existing hitboxes
 
+    final attackHitbox = AttackHitbox(
+      position: Vector2(scale.x > 0 ? hitbox.width : -40, -10),
+      size: Vector2(40, 40),
+    );
+
+    add (attackHitbox);
+  }
+  
+  void _showCompletionScreen() {
+    Vector2 cameraSize = game.cam.viewport.size;
+    double cameraOffsetX = 150.0;
+    double cameraOffsetY = 100.0;
+
+    // pop up screen
+    final popUp = SpriteAnimationComponent( 
+      animation: SpriteAnimation.fromFrameData(
+        game.images.fromCache('HUD/Popup.png'), 
+        SpriteAnimationData.sequenced(
+          amount: 8, 
+          stepTime: stepTime, 
+          textureSize: Vector2.all(96),
+        ),
+      ),
+      position: cameraSize / 2 - Vector2(cameraOffsetX, cameraOffsetY), // center of screen
+      // position: cameraSize / 2,
+      size: Vector2.all(350),
+      anchor: Anchor.center,
+    )..priority = 100;
+    
+    // item
+    final item = SpriteComponent(
+      sprite: Sprite(game.images.fromCache('Items/Chef Jacket.png')),
+      position: cameraSize / 2 - Vector2(cameraOffsetX, cameraOffsetY),
+      size: Vector2.all(100),
+      anchor: Anchor.center,
+    )..priority = 101;
+
+    final textRenderer = TextPaint(style: TextStyle(fontSize: 16, color: Color.fromARGB(255, 255, 255, 255)));
+    // congrats text
+    final text = TextComponent(
+      text: "Nice job! You get a Chef's Jacket!",
+      position: cameraSize / 2 - Vector2(cameraOffsetX, cameraOffsetY - 100),
+      anchor: Anchor.center,
+      textRenderer: textRenderer,
+    )..priority = 102;
+
+    // press anything text
+    final hintText = TextComponent(
+      text: "Press anything to continue",
+      position: cameraSize / 2 - Vector2(cameraOffsetX, cameraOffsetY - 150),
+      anchor: Anchor.center,
+      textRenderer: textRenderer,
+    )..priority = 102;
+
+    game.cam.viewport.addAll([popUp, item, text, hintText]);
+
+    late _CompletionInputHandler inputHandler;
+
+    inputHandler = _CompletionInputHandler(onContinue: () {
+      popUp.removeFromParent();
+      item.removeFromParent();
+      text.removeFromParent();
+      hintText.removeFromParent();
+      inputHandler.removeFromParent();
+      game.loadNextLevel();
+    });
+    
+    game.add(inputHandler);
+  }
+  
 }
+
+class _CompletionInputHandler extends Component with TapCallbacks, KeyboardHandler{
+  final VoidCallback onContinue;
+  bool _finished = false;
+
+  _CompletionInputHandler({required this.onContinue});
+
+  @override
+  bool onTapDown(TapDownEvent event) {
+    _trigger();
+    return true;
+  }
+
+  @override
+  bool onKeyEvent(KeyEvent event, Set<LogicalKeyboardKey> keysPressed) {
+    if (event is KeyDownEvent) {
+      _trigger();
+      return true;
+    }
+    return false;
+  }
+
+  void _trigger() {
+    if (_finished) return;
+    _finished = true;
+    onContinue();
+  }
+}
+

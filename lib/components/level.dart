@@ -2,7 +2,6 @@ import 'dart:async';
 import 'package:flame/components.dart';
 import 'package:flame_tiled/flame_tiled.dart';
 import 'package:platformer/components/background.dart';
-import 'package:platformer/components/checkpoint.dart';
 import 'package:platformer/components/chicken.dart';
 import 'package:platformer/components/collision_block.dart';
 import 'package:platformer/components/heal.dart';
@@ -85,19 +84,12 @@ class Level extends World with HasGameReference<PixelGame> {
             final offsetNeg = spawnPoint.properties.getValue('offsetNeg');
             final offsetPos = spawnPoint.properties.getValue('offsetPos');
             final chicken = Chicken(
-              position: Vector2(spawnPoint.x, spawnPoint.y),
-              size: Vector2(spawnPoint.width, spawnPoint.height),
+              position: Vector2(spawnPoint.x, spawnPoint.y - 32),
+              size: Vector2(64, 64),
               offsetNeg: offsetNeg,
               offsetPos: offsetPos,
             );
             add(chicken);
-            break;
-          case 'Checkpoint':
-            final checkpoint = Checkpoint(
-              position: Vector2(spawnPoint.x, spawnPoint.y),
-              size: Vector2(spawnPoint.width, spawnPoint.height),
-            );
-            add(checkpoint);
             break;
           default:
         }

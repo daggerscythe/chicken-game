@@ -4,6 +4,7 @@ import 'package:flame/input.dart';
 import 'package:flutter/material.dart';
 import 'package:flame/components.dart';
 import 'package:flame/game.dart';
+import 'package:platformer/components/healthbar.dart';
 import 'package:platformer/components/jump_button.dart';
 
 import 'components/level.dart';
@@ -19,14 +20,13 @@ class PixelGame extends FlameGame
   @override 
   Color backgroundColor() => const Color(0xFF211F30);
   late CameraComponent cam;
-  Player player = Player(character: 'Chef');
   late JoystickComponent joystick;
   bool showControls = false; // TODO: be able to flip in settings
   bool playSounds = true; // TODO: be able to flip in settings
-  double soundVolume = 0.2; // TODO: be able to set in settings
-  List<String> levels = ['level_01', 'level_02']; // add more levels later
+  double soundVolume = 0.05; // TODO: be able to set in settings
+  List<String> levels = ['level_01', 'level_02', 'level_03']; // add more levels later
   int currentLevelIndex = 0; // TODO: be able to pick level
-
+  Player player = Player(character: 'Chef'); //TODO: get character from level property
   @override
   FutureOr<void> onLoad() async {   
     await images.loadAllImages(); // use loadAll if you have many images for optimization
@@ -112,6 +112,9 @@ class PixelGame extends FlameGame
         height: 360
       );
       cam.viewfinder.anchor = Anchor.topLeft;
+
+      HealthBar health = HealthBar(player: player)..position = Vector2(60, 5);
+      cam.viewport.add(health);
 
       addAll([cam, world]);
     });

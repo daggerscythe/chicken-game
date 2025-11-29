@@ -24,6 +24,7 @@ class Chicken extends SpriteAnimationGroupComponent with HasGameReference<PixelG
   static const runSpeed = 80;
   static const _bounceVertical = 260.0;
   static const _bounceHorizontal = 150.0;
+  static const _attackKickback = 100.0;
   final textureSize = Vector2(32, 34);
 
   Vector2 velocity = Vector2.zero();
@@ -31,7 +32,6 @@ class Chicken extends SpriteAnimationGroupComponent with HasGameReference<PixelG
   double rangePos = 0.0;
   double moveDirection = 1;
   double targetDirection = -1; // by default chicken faces left
-  bool gotStomped = false;
   bool gotHit = false;
   int health = 5;
 
@@ -42,11 +42,11 @@ class Chicken extends SpriteAnimationGroupComponent with HasGameReference<PixelG
 
   @override
   FutureOr<void> onLoad() {
-    debugMode = false;
+    debugMode = true;
     player = game.player;
     add(RectangleHitbox(
       position: Vector2(4, 6),
-      size: Vector2(24, 26)
+      size: Vector2(55, 50)
     ));
     _loadAllAnimations();
     _calculateRange();
@@ -55,7 +55,7 @@ class Chicken extends SpriteAnimationGroupComponent with HasGameReference<PixelG
 
   @override
   void update(double dt) {
-    if (!gotStomped) {
+    if (!gotHit) {
       _updateState();
       _movement(dt);
     }
@@ -129,11 +129,7 @@ class Chicken extends SpriteAnimationGroupComponent with HasGameReference<PixelG
   void collidedWithPlayer() async {
     if (player.velocity.y > 0 && player.y + player.height > position.y) {
       if (game.playSounds) FlameAudio.play('bounce.wav', volume: game.soundVolume);
-      gotStomped = true;
-      current = ChickenState.hit;
       player.velocity.y = -_bounceVertical;
-      await animationTicker?.completed;
-      removeFromParent();
     } else {
       if (player.x < position.x) {
         player.velocity.x = -_bounceHorizontal.abs();
@@ -142,6 +138,28 @@ class Chicken extends SpriteAnimationGroupComponent with HasGameReference<PixelG
       }
       player.collidedWithEnemy();
     }
+  }
+
+  void takeDamage() async{
+    if (gotHit) return; // prevent spamming
+
+    health--;
+    gotHit = true;
+
+    if (health <= 0) {
+      if (game.playSounds) FlameAudio.play('hit.wav', volume: game.soundVolume);
+      current = ChickenState.hit;
+      await animationTicker?.completed;
+      removeFromParent();
+      player.levelComplete();
+    } else {
+      velocity.x = (player.scale.x > 0) ? _attackKickback : -_attackKickback;
+      current = ChickenState.hit;
+      await animationTicker?.completed;
+      animationTicker?.reset();
+    }
+    const hitCooldown = Duration(milliseconds: 500);
+    Future.delayed(hitCooldown, () => gotHit = false);
   }
 
 }
