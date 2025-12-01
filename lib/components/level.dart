@@ -14,6 +14,7 @@ import 'package:platformer/pixel_game.dart';
 class Level extends World with HasGameReference<PixelGame> {
   final String levelName;
   late Player player;
+  late Shaker shaker;
   Level({
     required this.levelName,
   });
@@ -91,7 +92,7 @@ class Level extends World with HasGameReference<PixelGame> {
             break;
           case 'Shaker':
             final shaker = Shaker(
-              shakerName: spawnPoint.name,
+              name: spawnPoint.name,
               position: Vector2(spawnPoint.x, spawnPoint.y),
               size: Vector2(spawnPoint.width, spawnPoint.height),
             );
@@ -116,6 +117,14 @@ class Level extends World with HasGameReference<PixelGame> {
             collisionBlocks.add(platform);
             add(platform);
             break;
+          case 'Block':
+            final block = CollisionBlock(
+              position: Vector2(collision.x, collision.y), 
+              size: Vector2(collision.width, collision.height),
+              isBlock: true,
+            );
+            collisionBlocks.add(block);
+            add(block);
           default:
           final block = CollisionBlock(
             position: Vector2(collision.x, collision.y), 

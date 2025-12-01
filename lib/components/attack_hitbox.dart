@@ -2,11 +2,17 @@ import 'dart:async';
 
 import 'package:flame/collisions.dart';
 import 'package:flame/components.dart';
-import 'package:platformer/components/chicken.dart';
-import 'package:platformer/components/player.dart';
 
 class AttackHitbox extends PositionComponent with CollisionCallbacks {
-  AttackHitbox({super.position, super.size});
+  final PositionComponent owner;
+  final void Function(PositionComponent target) onHit;
+
+  AttackHitbox({
+    required this.owner,
+    required this.onHit,
+    super.position, 
+    super.size,
+  });
 
   @override
   FutureOr<void> onLoad() {
@@ -17,9 +23,8 @@ class AttackHitbox extends PositionComponent with CollisionCallbacks {
 
   @override
   void onCollisionStart(Set<Vector2> intersectionPoints, PositionComponent other) {
-    if (other is Chicken && (parent as Player).current == PlayerState.slashing) {
-      other.takeDamage();
-    }
+    if (other == owner) return; // can't hit itself
+    onHit(other);
     super.onCollisionStart(intersectionPoints, other);
   }
 }

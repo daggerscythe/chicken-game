@@ -12,6 +12,7 @@ import 'package:platformer/components/collision_block.dart';
 import 'package:platformer/components/custom_hitbox.dart';
 import 'package:platformer/components/heal.dart';
 import 'package:platformer/components/saw.dart';
+import 'package:platformer/components/shaker.dart';
 import 'package:platformer/components/utils.dart';
 import 'package:platformer/pixel_game.dart';
 
@@ -22,7 +23,7 @@ class Player extends SpriteAnimationGroupComponent with HasGameReference<PixelGa
   String reward;
   Player({
     position, 
-    this.character = 'Virtual Guy',
+    this.character = 'Chef',
     this.reward = 'Chef Jacket',
   }) : super(position: position);
 
@@ -44,7 +45,7 @@ class Player extends SpriteAnimationGroupComponent with HasGameReference<PixelGa
   int maxLives = 3;
   int currentLives = 3;
   double horizontalMovement = 0;
-  double moveSpeed = 100;
+  double moveSpeed = 200;
   Vector2 startingPosition = Vector2.zero();
   Vector2 velocity = Vector2.zero();
   bool isOnGround = false;
@@ -53,11 +54,12 @@ class Player extends SpriteAnimationGroupComponent with HasGameReference<PixelGa
   bool defeatedBoss= false;
   bool recentlyHit = false;
   bool attacking = false;
+  AttackHitbox? attackHitbox;
   List<CollisionBlock> collisionBlocks = [];
   CustomHitbox hitbox = CustomHitbox(
-    offsetX: 10, 
+    offsetX: 8, 
     offsetY: 4, 
-    width: 14, 
+    width: 18, 
     height: 28,
   );
 
@@ -120,7 +122,6 @@ class Player extends SpriteAnimationGroupComponent with HasGameReference<PixelGa
         if (currentLives != maxLives) currentLives++;
       }
       if (other is Saw) _playerHit();
-      if (other is Chicken) other.collidedWithPlayer();
     }
     super.onCollisionStart(intersectionPoints, other);
   }
@@ -172,7 +173,7 @@ class Player extends SpriteAnimationGroupComponent with HasGameReference<PixelGa
     if (attacking) {
       if (game.playSounds) FlameAudio.play('slash.wav', volume: game.soundVolume);
       current = PlayerState.slashing;
-      _createAttackHitbox(); //TODO: make it so that it removes htibox afterwards
+      _attack();
       return;
     }
     
@@ -336,15 +337,31 @@ class Player extends SpriteAnimationGroupComponent with HasGameReference<PixelGa
     Future.delayed(canMoveDuration, () => recentlyHit = false);
   }
   
-  void _createAttackHitbox() {
-    removeWhere((component) => component is AttackHitbox); // remove existing hitboxes
-
-    final attackHitbox = AttackHitbox(
+  void _attack() async {
+    
+    attackHitbox = AttackHitbox(
+      owner: this,
+      onHit: (other) {
+        if (other is Chicken) other.takeDamage();
+        if (other is Shaker) other.takeDamage();
+      },
       position: Vector2(scale.x > 0 ? hitbox.width : -hitbox.width + 30, 0), // TODO: remove magic number
       size: Vector2(40, 30),
     );
 
-    add (attackHitbox);
+    add (attackHitbox!);
+
+    await animationTicker?.completed;
+    
+    _removeAttackHitbox();
+
+    animationTicker?.reset();
+    attacking = false;
+  }
+
+  void _removeAttackHitbox() {
+    attackHitbox?.removeFromParent();
+    attackHitbox = null;
   }
   
   void _showCompletionScreen() {
@@ -405,6 +422,7 @@ class Player extends SpriteAnimationGroupComponent with HasGameReference<PixelGa
     
     game.add(inputHandler);
   }
+  
 }
 
 class _CompletionInputHandler extends Component with TapCallbacks, KeyboardHandler{

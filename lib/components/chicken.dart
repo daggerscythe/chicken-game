@@ -4,6 +4,7 @@ import 'dart:ui';
 import 'package:flame/collisions.dart';
 import 'package:flame/components.dart';
 import 'package:flame_audio/flame_audio.dart';
+import 'package:platformer/components/attack_hitbox.dart';
 import 'package:platformer/components/player.dart';
 import 'package:platformer/pixel_game.dart';
 
@@ -16,7 +17,6 @@ class Chicken extends SpriteAnimationGroupComponent with HasGameReference<PixelG
   }); 
 
   static const stepTime = 0.05;
-  static const tileSize = 16;
   static const runSpeed = 60;
   static const _bounceVertical = 260.0;
   static const _bounceHorizontal = 150.0;
@@ -31,6 +31,7 @@ class Chicken extends SpriteAnimationGroupComponent with HasGameReference<PixelG
   bool gotHit = false;
   bool canAttack = true;
   int health = 5;
+  AttackHitbox? attackHitbox;
 
   late final Player player;
   late final SpriteAnimation _idleAnimation;
@@ -90,14 +91,18 @@ class Chicken extends SpriteAnimationGroupComponent with HasGameReference<PixelG
   void _movement(double dt) {
     velocity.x = 0;
 
-    // double playerOffset = (player.scale.x > 0) ? 0 : -player.width;
-    // double chickenOffset = (scale.x > 0) ? 0 : -width;
+    if (current == ChickenState.hit || current == ChickenState.attacking) {
+      velocity.x = 0;
+      return;
+    }
 
     if (playerOnSameLevel()) {
       double distanceToPlayer = (position.x - player.x).abs();
 
-      if(distanceToPlayer < attackRange && current != ChickenState.attacking && canAttack) {
+      if(distanceToPlayer < attackRange && canAttack) {
+        current = ChickenState.attacking;
         _attackPlayer();
+        return;
       } else if (distanceToPlayer < chaseRange) {
         targetDirection = (player.x < position.x) ? -1 : 1;
         velocity.x = targetDirection * runSpeed;
@@ -128,6 +133,8 @@ class Chicken extends SpriteAnimationGroupComponent with HasGameReference<PixelG
     }
   }
 
+
+  //TODO: add player bouncing off the chicken
   void collidedWithPlayer() async {
     if (player.velocity.y > 0 && player.y + player.height > position.y) {
       if (game.playSounds) FlameAudio.play('bounce.wav', volume: game.soundVolume);
@@ -144,6 +151,8 @@ class Chicken extends SpriteAnimationGroupComponent with HasGameReference<PixelG
 
   void takeDamage() async{
     if (gotHit) return; // prevent spamming
+
+    _removeAttackHitbox();
 
     health--;
     gotHit = true;
@@ -165,24 +174,33 @@ class Chicken extends SpriteAnimationGroupComponent with HasGameReference<PixelG
   }
   
   void _attackPlayer() async {
-    if (current == ChickenState.attacking || !canAttack) return;
-
     canAttack = false;
     current = ChickenState.attacking;
-    velocity.x = 0;
  
+    attackHitbox = AttackHitbox(
+      owner: this,
+      onHit: (other) {
+        if (other is Player) other.collidedWithEnemy();
+      },
+      position: Vector2(-20, 40),
+      size: Vector2(30, 30),
+    );
+
+    add(attackHitbox!);
+
     await animationTicker?.completed;
+
+    _removeAttackHitbox();
+
     animationTicker?.reset();
-
-    if (playerInRange() && (position.x - player.x).abs() < attackRange) {
-      player.collidedWithEnemy();
-    }
-
     current = ChickenState.idle;
 
     await Future.delayed(const Duration(seconds: 1), () => canAttack = true);
-
-    _updateState(); 
+  }
+  
+  void _removeAttackHitbox() {
+    attackHitbox?.removeFromParent();
+    attackHitbox = null;
   }
 
 }

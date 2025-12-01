@@ -61,7 +61,7 @@
     <property name="offsetPos" type="float" value="3"/>
    </properties>
   </object>
-  <object id="57" name="Chicken" type="Chicken" x="414.754" y="206.754" width="64.7459" height="64.7459"/>
+  <object id="57" name="Chicken" type="Chicken" x="448" y="208" width="64.7459" height="64.7459"/>
   <object id="59" name="Heal" type="Heal" x="55.377" y="127.59" width="32" height="32"/>
   <object id="61" name="Heal" type="Heal" x="56.6066" y="175.18" width="32" height="32"/>
   <object id="63" name="Heal" type="Heal" x="552.443" y="96.2951" width="32" height="32"/>
