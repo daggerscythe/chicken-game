@@ -12,7 +12,8 @@ enum ChickenState {idle, running, hit, attacking}
 
 class Chicken extends SpriteAnimationGroupComponent with HasGameReference<PixelGame>, CollisionCallbacks {
 
-  Chicken({super.position, // shortcut for constructors
+  Chicken({
+    super.position, // shortcut for constructors
     super.size, // shortcut for constructors
   }); 
 
@@ -41,7 +42,7 @@ class Chicken extends SpriteAnimationGroupComponent with HasGameReference<PixelG
 
   @override
   FutureOr<void> onLoad() {
-    debugMode = true;
+    // debugMode = true;
     player = game.player;
     add(RectangleHitbox(
       position: Vector2.zero(),
@@ -153,8 +154,9 @@ class Chicken extends SpriteAnimationGroupComponent with HasGameReference<PixelG
     if (gotHit) return; // prevent spamming
 
     _removeAttackHitbox();
+    canAttack = true;
 
-    health--;
+    health = health - 5; // TODO: this is just debug, change to -- later
     gotHit = true;
 
     if (health <= 0) {

@@ -4,6 +4,8 @@ import 'package:flame_tiled/flame_tiled.dart';
 import 'package:platformer/components/background.dart';
 import 'package:platformer/components/chicken.dart';
 import 'package:platformer/components/collision_block.dart';
+import 'package:platformer/components/corner_fire.dart';
+import 'package:platformer/components/fire.dart';
 import 'package:platformer/components/heal.dart';
 import 'package:platformer/components/player.dart';
 import 'package:platformer/components/saw.dart';
@@ -97,6 +99,21 @@ class Level extends World with HasGameReference<PixelGame> {
               size: Vector2(spawnPoint.width, spawnPoint.height),
             );
             add(shaker);
+          case 'Fire':
+            final fire = Fire(
+              position: Vector2(spawnPoint.x, spawnPoint.y),
+              size: Vector2(spawnPoint.width, spawnPoint.height),
+            );
+            add(fire);
+            break;
+          case 'CornerFire':
+            final cornerFire = CornerFire(
+              corner: spawnPoint.name,
+              position: Vector2(spawnPoint.x, spawnPoint.y),
+              size: Vector2(spawnPoint.width, spawnPoint.height),
+            );
+            add(cornerFire);
+            break;
           default:
         }
       } 

@@ -11,7 +11,7 @@ import 'package:platformer/components/player.dart';
 import 'package:platformer/components/utils.dart';
 import 'package:platformer/pixel_game.dart';
 
-enum ShakerState {idle, attacking, jumping, hit}
+enum ShakerState {idle, attacking, jumping, hit, disappearing}
 
 class Shaker extends SpriteAnimationGroupComponent with HasGameReference<PixelGame>, CollisionCallbacks {
   final String name;
@@ -26,10 +26,10 @@ class Shaker extends SpriteAnimationGroupComponent with HasGameReference<PixelGa
   static const gravity = 9.8;
   static const _attackKickback = 100.0;
   final double terminalVelocity = 300;
-  final double jumpForce = 200.0; 
+  final double jumpForce = 300.0; 
   final double horizontalPush = 150.0;
   final double jumpCooldown = 5; // seconds
-  final double stompRange = 100;
+  final double stompRange = 150;
   final double shootRange = 400;
   final double attackCooldownTime = 3; // seconds
   final double shootWindup = 0.35; // 7 * 0.05 step time 
@@ -60,6 +60,7 @@ class Shaker extends SpriteAnimationGroupComponent with HasGameReference<PixelGa
   late final SpriteAnimation _attackingAnimation;
   late final SpriteAnimation _jumpingAnimation;
   late final SpriteAnimation _hitAnimation;
+  late final SpriteAnimation _disappearingAnimation;
 
   @override
   FutureOr<void> onLoad() {
@@ -117,12 +118,14 @@ class Shaker extends SpriteAnimationGroupComponent with HasGameReference<PixelGa
     _attackingAnimation = _spriteAnimation('Attack', 13, 32, 32)..loop = false;
     _jumpingAnimation = _spriteAnimation('Jump', 12, 32, 32)..loop = false;
     _hitAnimation = _spriteAnimation('Hit', 8, 32, 32)..loop = false;
+    _disappearingAnimation = _spriteAnimation('Disappearing', 7, 96, 96)..loop = false;
 
     animations = {
       ShakerState.idle: _idleAnimation,
       ShakerState.attacking: _attackingAnimation,
       ShakerState.jumping: _jumpingAnimation,
       ShakerState.hit: _hitAnimation,
+      ShakerState.disappearing: _disappearingAnimation,
     };
 
     current = ShakerState.idle;
@@ -174,18 +177,18 @@ class Shaker extends SpriteAnimationGroupComponent with HasGameReference<PixelGa
       // for a non-platform block
       if (!block.isPlatform && !block.isBlock) {
         if (checkCollision(this, block)) {
+          // final double ogVelocityX = velocity.x;
           // right collision
           if (velocity.x > 0) {
-            velocity.x = 0;
             position.x = block.x - hitbox.offsetX - hitbox.width;
-            break;
           }
           // left collison
           if (velocity.x < 0) {
-            velocity.x = 0;
             position.x = block.x + block.width + hitbox.width + hitbox.offsetX;
-            break;
           }
+
+          velocity.x = -velocity.x; // bounce off the wall
+          break;
         }
       }
     }
@@ -247,21 +250,23 @@ class Shaker extends SpriteAnimationGroupComponent with HasGameReference<PixelGa
   }
 
   void _fireProjectile() {
-    final Vector2 playerCenter = player.position + player.size / 2;
+    final Vector2 playerCenter = player.position.clone() + player.size / 2;
     final Vector2 start = Vector2(
       position.x + hitbox.offsetX + hitbox.width / 2,
       position.y + hitbox.offsetY + hitbox.height / 2,
-    );
+    ).clone();
+
+    print('Flake start: $start, Enemy pos: $position, Player pos: ${player.position}');
+
     final Vector2 direction = (playerCenter - start).normalized();
 
     final flake = FlakeProjectile(
       flakeType: name,
       startPosition: start,
       direction: direction,
-      speed: 200,
     );
 
-    game.add(flake);
+    game.currentLevel?.add(flake);
   }
   
   bool _playerInStompRange() {
@@ -293,21 +298,30 @@ class Shaker extends SpriteAnimationGroupComponent with HasGameReference<PixelGa
 
     _removeAttackHitbox(); // in case attack was interrupted
 
-    health--;
+    health = health - 5; // TODO: this is just debug, change to -- later
     gotHit = true;
 
     if (health <= 0) {
       if (game.playSounds) FlameAudio.play('hit.wav', volume: game.soundVolume);
-      current = ShakerState.hit;
+      current = ShakerState.disappearing;
       await animationTicker?.completed;
+      bool lastShaker = _noShakersLeft();
       removeFromParent();
-      // player.levelComplete(); //TODO: make a detection for both boss deaths
+
+      if (lastShaker) {
+        player.levelComplete();
+      }
+
     } else {
       velocity.x = (player.scale.x > 0) ? _attackKickback : -_attackKickback;
       current = ShakerState.hit;
       await animationTicker?.completed;
       animationTicker?.reset();
     }
+
+    // finish level if no other shakers are present
+    // if (_noShakersLeft()) player.levelComplete();
+
     const hitCooldown = Duration(milliseconds: 500);
     Future.delayed(hitCooldown, () => gotHit = false);
     current = ShakerState.idle;
@@ -316,6 +330,17 @@ class Shaker extends SpriteAnimationGroupComponent with HasGameReference<PixelGa
   void _removeAttackHitbox() {
     attackHitbox?.removeFromParent();
     attackHitbox = null;
+  }
+  
+  bool _noShakersLeft() {
+    if (parent == null) return true;
+
+    int currentShakers = parent!.children
+      .whereType<Shaker>()
+      .where((shaker) => shaker != this)
+      .length;
+    
+    return currentShakers == 0;
   }
   
 }

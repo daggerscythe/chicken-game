@@ -74,6 +74,8 @@ flutter:
     - assets/images/Enemies/Chicken/
     - assets/images/Enemies/Salt/
     - assets/images/Enemies/Pepper/
+    - assets/images/Enemies/Fire/
+    - assets/images/Enemies/Corner Fire/
     - assets/images/Items/Fruits/
     - assets/images/Items/
     - assets/images/Items/Checkpoints/Checkpoint/

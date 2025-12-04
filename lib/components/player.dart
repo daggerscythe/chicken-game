@@ -10,6 +10,8 @@ import 'package:platformer/components/attack_hitbox.dart';
 import 'package:platformer/components/chicken.dart';
 import 'package:platformer/components/collision_block.dart';
 import 'package:platformer/components/custom_hitbox.dart';
+import 'package:platformer/components/fireball.dart';
+import 'package:platformer/components/flake_projectile.dart';
 import 'package:platformer/components/heal.dart';
 import 'package:platformer/components/saw.dart';
 import 'package:platformer/components/shaker.dart';
@@ -39,13 +41,13 @@ class Player extends SpriteAnimationGroupComponent with HasGameReference<PixelGa
   late final SpriteAnimation disappearingAnimation;
 
   final double _gravity = 9.8;
-  final double _jumpForce = 260;
+  final double _jumpForce = 300;
   final double _terminalVelocity = 300;
 
   int maxLives = 3;
   int currentLives = 3;
   double horizontalMovement = 0;
-  double moveSpeed = 200;
+  double moveSpeed = 100;
   Vector2 startingPosition = Vector2.zero();
   Vector2 velocity = Vector2.zero();
   bool isOnGround = false;
@@ -258,6 +260,20 @@ class Player extends SpriteAnimationGroupComponent with HasGameReference<PixelGa
             break;
           }
         }
+      } else if (block.isBlock){
+        if (checkCollision(this, block)) {
+          if (velocity.y < 0) {
+            velocity.y = 0;
+            position.y = block.y + block.height;
+            break;          
+          }
+          if (velocity.y > 0) {
+            velocity.y = 0;
+            position.y = block.y - hitbox.height - hitbox.offsetY;
+            isOnGround = true;
+            break;
+          }
+        }
       } else {
         if (checkCollision(this, block)) {
           if (velocity.y > 0) {
@@ -338,12 +354,23 @@ class Player extends SpriteAnimationGroupComponent with HasGameReference<PixelGa
   }
   
   void _attack() async {
+    final attackDuration = const Duration(milliseconds: 300);
+
+    _removeAttackHitbox();
     
     attackHitbox = AttackHitbox(
       owner: this,
       onHit: (other) {
         if (other is Chicken) other.takeDamage();
         if (other is Shaker) other.takeDamage();
+        if (other is FlakeProjectile) {
+          if (game.playSounds) FlameAudio.play('hit.wav', volume: game.soundVolume);
+          other.removeFromParent();
+        } 
+        if (other is Fireball) {
+          if (game.playSounds) FlameAudio.play('hit.wav', volume: game.soundVolume);
+          other.removeFromParent();
+        } 
       },
       position: Vector2(scale.x > 0 ? hitbox.width : -hitbox.width + 30, 0), // TODO: remove magic number
       size: Vector2(40, 30),
@@ -351,9 +378,7 @@ class Player extends SpriteAnimationGroupComponent with HasGameReference<PixelGa
 
     add (attackHitbox!);
 
-    await animationTicker?.completed;
-    
-    _removeAttackHitbox();
+    Future.delayed(attackDuration, () => _removeAttackHitbox());
 
     animationTicker?.reset();
     attacking = false;
