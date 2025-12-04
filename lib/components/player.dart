@@ -10,6 +10,7 @@ import 'package:platformer/components/attack_hitbox.dart';
 import 'package:platformer/components/chicken.dart';
 import 'package:platformer/components/collision_block.dart';
 import 'package:platformer/components/custom_hitbox.dart';
+import 'package:platformer/components/fire.dart';
 import 'package:platformer/components/fireball.dart';
 import 'package:platformer/components/flake_projectile.dart';
 import 'package:platformer/components/heal.dart';
@@ -371,6 +372,7 @@ class Player extends SpriteAnimationGroupComponent with HasGameReference<PixelGa
           if (game.playSounds) FlameAudio.play('hit.wav', volume: game.soundVolume);
           other.removeFromParent();
         } 
+        if (other is Fire) other.takeDamage();
       },
       position: Vector2(scale.x > 0 ? hitbox.width : -hitbox.width + 30, 0), // TODO: remove magic number
       size: Vector2(40, 30),

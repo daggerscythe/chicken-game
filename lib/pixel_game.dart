@@ -24,7 +24,7 @@ class PixelGame extends FlameGame
   Level? currentLevel;
   CameraComponent? currentCamera;
   bool showControls = false; // TODO: be able to flip in settings
-  bool playSounds = true; // TODO: be able to flip in settings
+  bool playSounds = false; // TODO: be able to flip in settings ALSO CHANGE TO TRUE
   double soundVolume = 0.05; // TODO: be able to set in settings
   List<String> levels = ['level_01', 'level_02', 'level_03']; // add more levels later
   int currentLevelIndex = 0; // TODO: be able to pick level

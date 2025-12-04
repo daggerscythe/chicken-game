@@ -166,6 +166,7 @@ class Chicken extends SpriteAnimationGroupComponent with HasGameReference<PixelG
       removeFromParent();
       player.levelComplete();
     } else {
+      if (game.playSounds) FlameAudio.play('hit.wav', volume: game.soundVolume);
       velocity.x = (player.scale.x > 0) ? _attackKickback : -_attackKickback;
       current = ChickenState.hit;
       await animationTicker?.completed;

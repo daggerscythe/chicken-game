@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flame/collisions.dart';
 import 'package:flame/components.dart';
+import 'package:flame_audio/flame_audio.dart';
 import 'package:platformer/components/player.dart';
 import 'package:platformer/pixel_game.dart';
 
@@ -25,7 +26,10 @@ class Fire extends SpriteAnimationGroupComponent with HasGameReference<PixelGame
 
   int health = 10;
   bool shielded = false;
-  double shootCooldown = 5; // seconds
+  bool isShieldAnimating = false;
+  bool recentlyHit = false;
+  double shieldCooldown = 5; // seconds
+  double shieldTimer = 0;
 
   @override
   FutureOr<void> onLoad() {
@@ -42,7 +46,14 @@ class Fire extends SpriteAnimationGroupComponent with HasGameReference<PixelGame
 
   @override
   void update(double dt) {
-    // TODO: implement update
+    if (!isShieldAnimating) {
+      shieldTimer += dt;
+
+      if (shieldTimer >= shieldCooldown) {
+        _shieldToggle();
+        shieldTimer = 0;
+      }
+    }
     super.update(dt);
   }
 
@@ -75,16 +86,52 @@ class Fire extends SpriteAnimationGroupComponent with HasGameReference<PixelGame
     );
   }
 
-  void takeDamage() {
+  Future<void> takeDamage() async {
+    if (!shielded) {
+      if (recentlyHit) return; // prevents spamming
 
+      health -= 10; //TODO: this is just for debugging
+      recentlyHit = true;
+
+      if (game.playSounds) FlameAudio.play('hit.wav', volume: game.soundVolume);
+      current = FireState.hit;
+      await animationTicker?.completed;
+      animationTicker?.reset();
+
+      if (health <= 0) {
+        removeFromParent();
+        player.levelComplete();
+      }
+
+      const hitCooldown = Duration(milliseconds: 500);
+      Future.delayed(hitCooldown, () => recentlyHit = false);
+    }    
   }
 
-  void _shootFire() {
+  Future<void> _shieldToggle() async {
+    if (isShieldAnimating) return;
 
-  }
+    isShieldAnimating = true;
 
-  void _shieldToggle() {
+    if (!shielded) {
+      shielded = true;
+      current = FireState.shieldDeploy;
+      
+      await animationTicker?.completed;
+      animationTicker?.reset();
 
+      current = FireState.shielded; 
+    } else {
+      shielded = false;
+      current = FireState.shieldRemove;
+      
+      await animationTicker?.completed;
+      animationTicker?.reset();
+
+      current = FireState.idle; 
+    }
+
+    isShieldAnimating = false;
   }
   
   

@@ -40,7 +40,7 @@ class CornerFire extends SpriteAnimationComponent with HasGameReference<PixelGam
     cooldownTimer += dt;
 
     if (cooldownTimer >= shootCooldown) {
-      _shootFireballs();
+      // _shootFireballs();
       cooldownTimer = 0;
     }
 
@@ -54,13 +54,20 @@ class CornerFire extends SpriteAnimationComponent with HasGameReference<PixelGam
   }
 
   void _shootFireballs() {
-    final Duration fireballInterval = const Duration(milliseconds: 500);
+    final fireballInterval = 0.5;
+    // final Duration fireballInterval = const Duration(milliseconds: 500);
     for (int i = 0; i < 3; i++) {
-      final fireball = Fireball(
-        position: position.clone(), 
-        size: Vector2.all(32),
-      );
-      Future.delayed(fireballInterval, () => game.currentLevel?.add(fireball));      
+      final delay = fireballInterval * i;
+
+      Future.delayed(Duration(seconds: delay.toInt(), milliseconds: ((delay % 1) * 1000).toInt()), () {
+        final fireball = Fireball(
+          position: position.clone(), 
+          size: Vector2.all(32),
+        );
+        game.currentLevel?.add(fireball);
+      });    
+      
+       
     }
     
   }
