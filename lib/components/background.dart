@@ -29,7 +29,6 @@ class Background extends PositionComponent with HasGameReference<PixelGame> {
   @override
   void onGameResize(Vector2 newSize) {
     super.onGameResize(newSize);
-    // size = newSize;
     position = Vector2.zero();
     backgroundSprite.size = game.canvasSize;
     size = game.canvasSize;

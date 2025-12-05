@@ -52,7 +52,7 @@ class Shaker extends SpriteAnimationGroupComponent with HasGameReference<PixelGa
   double attackCooldown = 0;
   double fixedDeltaTime = 1 / 60; // 60 fps
   double accumulatedTime = 0;
-  int health = 5;
+  int health = 2; // TODO: for presentation only
   AttackHitbox? attackHitbox;
 
   late final Player player;
@@ -64,7 +64,7 @@ class Shaker extends SpriteAnimationGroupComponent with HasGameReference<PixelGa
 
   @override
   FutureOr<void> onLoad() {
-    debugMode = true;
+    // debugMode = true;
     player = game.player;
     add(RectangleHitbox(
       position: Vector2(hitbox.offsetX, hitbox.offsetY),
@@ -177,7 +177,6 @@ class Shaker extends SpriteAnimationGroupComponent with HasGameReference<PixelGa
       // for a non-platform block
       if (!block.isPlatform && !block.isBlock) {
         if (checkCollision(this, block)) {
-          // final double ogVelocityX = velocity.x;
           // right collision
           if (velocity.x > 0) {
             position.x = block.x - hitbox.offsetX - hitbox.width;
@@ -255,9 +254,7 @@ class Shaker extends SpriteAnimationGroupComponent with HasGameReference<PixelGa
       position.x + hitbox.offsetX + hitbox.width / 2,
       position.y + hitbox.offsetY + hitbox.height / 2,
     ).clone();
-
-    print('Flake start: $start, Enemy pos: $position, Player pos: ${player.position}');
-
+    
     final Vector2 direction = (playerCenter - start).normalized();
 
     final flake = FlakeProjectile(
@@ -298,7 +295,7 @@ class Shaker extends SpriteAnimationGroupComponent with HasGameReference<PixelGa
 
     _removeAttackHitbox(); // in case attack was interrupted
 
-    health = health - 5; // TODO: this is just debug, change to -- later
+    health--;
     gotHit = true;
 
     if (health <= 0) {
@@ -318,9 +315,6 @@ class Shaker extends SpriteAnimationGroupComponent with HasGameReference<PixelGa
       await animationTicker?.completed;
       animationTicker?.reset();
     }
-
-    // finish level if no other shakers are present
-    // if (_noShakersLeft()) player.levelComplete();
 
     const hitCooldown = Duration(milliseconds: 500);
     Future.delayed(hitCooldown, () => gotHit = false);

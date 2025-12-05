@@ -25,10 +25,10 @@ class PixelGame extends FlameGame
   Level? currentLevel;
   CameraComponent? currentCamera;
   bool showControls = false; // TODO: be able to flip in settings
-  bool playSounds = false; // TODO: be able to flip in settings ALSO CHANGE TO TRUE
+  bool playSounds = true;
   double soundVolume = 0.05; // TODO: be able to set in settings
-  List<String> levels = ['level_01', 'level_02', 'level_03']; // add more levels later
-  int currentLevelIndex = 0; // TODO: be able to pick level
+  List<String> levels = ['level_01', 'level_02', 'level_03']; 
+  int currentLevelIndex = 0;
   late Player player;
   
   @override
@@ -124,17 +124,10 @@ class PixelGame extends FlameGame
       currentCamera = cam;
 
       cam.viewport.removeWhere((c) => c is Menu); // avoid duplicates
-      final menu = Menu(game: this);
+      final menu = Menu(game: this)..position = Vector2(480, 5);
       cam.viewport.add(menu);
 
       addAll([cam, world]);
-
-      await Future.delayed(Duration(milliseconds: 50));
-
-      
-
-      print("Camera viewport size: ${cam.viewport.size}");
-      print("Game size: ${size}");
 
       await Future.delayed(Duration(milliseconds: 100));
     });

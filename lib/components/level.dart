@@ -6,7 +6,7 @@ import 'package:platformer/components/chicken.dart';
 import 'package:platformer/components/collision_block.dart';
 import 'package:platformer/components/corner_fire.dart';
 import 'package:platformer/components/fire.dart';
-import 'package:platformer/components/heal.dart';
+import 'package:platformer/components/fire_controller.dart';
 import 'package:platformer/components/heal_manager.dart';
 import 'package:platformer/components/player.dart';
 import 'package:platformer/components/saw.dart';
@@ -24,6 +24,8 @@ class Level extends World with HasGameReference<PixelGame> {
   late TiledComponent level;
   List<CollisionBlock> collisionBlocks = [];
   HealManager healManager = HealManager();
+  FireController fireController = FireController();
+  List<CornerFire> cornerFires = [];
 
   @override
   FutureOr<void> onLoad() async {
@@ -116,6 +118,12 @@ class Level extends World with HasGameReference<PixelGame> {
               size: Vector2(spawnPoint.width, spawnPoint.height),
             );
             add(cornerFire);
+            cornerFires.add(cornerFire);
+            if (cornerFires.length == 1) {
+              cornerFire.cooldownTimer = 0;
+            } else if (cornerFires.length == 2) {
+              cornerFire.cooldownTimer = 8.0;
+            }
             break;
           default:
         }

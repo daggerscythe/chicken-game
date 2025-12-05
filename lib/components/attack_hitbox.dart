@@ -16,15 +16,15 @@ class AttackHitbox extends PositionComponent with CollisionCallbacks {
 
   @override
   FutureOr<void> onLoad() {
-    debugMode = true;
+    // debugMode = true;
     add(RectangleHitbox());
     return super.onLoad();
   }
 
   @override
-  void onCollisionStart(Set<Vector2> intersectionPoints, PositionComponent other) {
+  void onCollision(Set<Vector2> intersectionPoints, PositionComponent other) {
     if (other == owner) return; // can't hit itself
     onHit(other);
-    super.onCollisionStart(intersectionPoints, other);
+    super.onCollision(intersectionPoints, other);
   }
 }

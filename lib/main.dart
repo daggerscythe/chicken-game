@@ -1,5 +1,5 @@
 import 'package:flame/flame.dart';
-import 'package:flutter/foundation.dart';
+// import 'package:flutter/foundation.dart'; // for debugging
 import 'package:flutter/material.dart';
 import 'package:flame/game.dart';
 import 'package:platformer/pixel_game.dart';
@@ -10,6 +10,6 @@ void main() async {
   await Flame.device.setLandscape();
 
   PixelGame game = PixelGame();
-  // runApp(GameWidget(game: game)); // uncomment when done
-  runApp(GameWidget(game: kDebugMode ? PixelGame() : game)); // for debugging
+  runApp(GameWidget(game: game)); // uncomment when done
+  // runApp(GameWidget(game: kDebugMode ? PixelGame() : game)); // for debugging
 }

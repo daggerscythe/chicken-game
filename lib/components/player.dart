@@ -72,7 +72,7 @@ class Player extends SpriteAnimationGroupComponent with HasGameReference<PixelGa
   @override
   FutureOr<void> onLoad() {
     _loadAllAnimations();
-    debugMode = true; // to show player collision
+    // debugMode = true; // to show player collision
     startingPosition = Vector2(position.x, position.y); // get spawn point
     add(RectangleHitbox(
       position: Vector2(hitbox.offsetX, hitbox.offsetY),
@@ -349,9 +349,11 @@ class Player extends SpriteAnimationGroupComponent with HasGameReference<PixelGa
   }
 
   void collidedWithEnemy() {
-    _playerHit();
-    recentlyHit = true;
-    Future.delayed(canMoveDuration, () => recentlyHit = false);
+    if (!recentlyHit) {
+      _playerHit();
+      recentlyHit = true;
+      Future.delayed(canMoveDuration, () => recentlyHit = false);
+    }
   }
   
   void _attack() async {
@@ -417,7 +419,13 @@ class Player extends SpriteAnimationGroupComponent with HasGameReference<PixelGa
       anchor: Anchor.center,
     )..priority = 101;
 
-    final textRenderer = TextPaint(style: TextStyle(fontSize: 16, color: Color.fromARGB(255, 255, 255, 255)));
+    final textRenderer = TextPaint(
+      style: TextStyle(
+        fontFamily: 'Daydream',
+        fontSize: 16, 
+        color: Color.fromARGB(255, 255, 255, 255),
+      ),
+    );
     // congrats text
     final text = TextComponent(
       text: "Nice job! You get a $reward!",

@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:ui';
 
 import 'package:flame/components.dart';
 import 'package:flame/events.dart';
@@ -15,92 +14,88 @@ class Menu extends PositionComponent with HasGameReference<PixelGame>, TapCallba
   late SpriteComponent volumeButton;
   late SpriteComponent settingsButton;
 
-  late final SpriteComponent tempSprite;
-
-  @override
-  void onMount() {
-    super.onMount();
-    final viewportSize = game.cam.viewport.size;
-    position = Vector2(viewportSize.x - 100, 20); // top-right
-  }
-
+  _LevelsOverlay? _levelsOverlay;
+  _SettingsOverlay? _settingsOverlay;
 
   @override
   FutureOr<void> onLoad() {
     priority = 100;
-    // top-right corner
-    final viewportSize = game.cam.viewport.size;
-    // position = Vector2(viewportSize.x - 100, 100);
-    size = Vector2(200, 50);
-    anchor = Anchor.topRight;
-    position = Vector2(viewportSize.x - 400, 200);
-
 
     // levels button
     levelsButton = MenuSpriteButton(
-      sprite: Sprite(game.images.fromCache('Items/Rotisserie.png')), 
+      sprite: Sprite(game.images.fromCache('Menu/Buttons/Levels.png')), 
       position: Vector2.zero(), 
-      size: Vector2.all(40), 
-      onPressed: _showLevelsMenu,
+      size: Vector2.all(30), 
+      onPressed: _toggleLevelsMenu,
     );
 
     // volume button
     volumeButton = VolumeButton(
       game: game, 
-      position: Vector2(50, 0), 
-      size: Vector2.all(40),
+      position: Vector2(40, 0), 
+      size: Vector2.all(30),
     );
 
     // settings button
     settingsButton = MenuSpriteButton(
       sprite: Sprite(game.images.fromCache('Menu/Buttons/Settings.png')),
-      position: Vector2(100, 0),
-      size: Vector2.all(40),
-      onPressed: _showSettings,
+      position: Vector2(80, 0),
+      size: Vector2.all(30),
+      onPressed: _toggleSettings,
     );
 
     addAll([levelsButton, volumeButton, settingsButton]);
 
-    print("menu is at ${position} size: ${size}");
-    print("levels button is at ${levelsButton.position} size: ${levelsButton.size}");
-
     return super.onLoad();
   }
 
-  void _showLevelsMenu() {
-    final overlay = _LevelsOverlay(game: game);
-    game.cam.viewport.add(overlay);
+  void _toggleLevelsMenu() {
+    if (_levelsOverlay == null || !_levelsOverlay!.isMounted) {
+      // create a new overlay
+      _levelsOverlay = _LevelsOverlay(game: game, menu: this);
+      game.cam.viewport.add(_levelsOverlay!);
+    } else {
+      // hide overlay
+      _levelsOverlay!.removeFromParent();
+      _levelsOverlay = null;
+    }
+    
   }
 
-  void _showSettings() {
-    final settings = _SettingsOverlay(game: game);
-    game.cam.viewport.add(settings);
+  void _toggleSettings() {
+    if (_settingsOverlay == null || !_settingsOverlay!.isMounted) {
+      // create a new overlay
+      _settingsOverlay = _SettingsOverlay(game: game, menu: this);
+      game.cam.viewport.add(_settingsOverlay!);
+    } else {
+      // hide overlay
+      _settingsOverlay!.placeholder.removeFromParent();
+      _settingsOverlay!.placeholderBackground.removeFromParent();
+      _settingsOverlay = null;
+    }
   }
 
 }
 
 class _LevelsOverlay extends PositionComponent {
   final PixelGame game;
+  final Menu menu;
 
-  _LevelsOverlay({required this.game});
+  _LevelsOverlay({
+    required this.game, 
+    required this.menu
+  });
 
   @override
   FutureOr<void> onLoad() {
-    size = game.size;
-    position = Vector2.zero();
-
-    // opaque background
-    add(RectangleComponent(
-      size: size,
-      paint: Paint()..color = Color(0x80000000),
-    ));
+    priority = 1000;
 
     // level buttons
     for (int i = 0; i < game.levels.length; i++) {
       final button = LevelSelectButton(
         sprite: Sprite(game.images.fromCache('Menu/Levels/0${i+1}.png')), 
-        position: Vector2(game.size.x / 2 - 100, 100 + i * 60), 
-        size: Vector2(200, 50), 
+        position: Vector2(menu.position.x - 100 + i * 50, menu.levelsButton.y + 40), 
+        size: Vector2.all(40), 
         onPressed: () {
           game.currentLevelIndex = i;
           game.loadLevel();
@@ -110,66 +105,63 @@ class _LevelsOverlay extends PositionComponent {
       add(button);
     }
 
-    final closeButton = CloseButton(
-      sprite: Sprite(game.images.fromCache('Menu/Buttons/Close.png')),
-      position: Vector2(game.size.x - 40, 10), 
-      size: Vector2.all(30), 
-      onTap: () => removeFromParent(),
-    );
-    add(closeButton);
-
     return super.onLoad();
   }
 }
 
 class _SettingsOverlay extends PositionComponent with TapCallbacks {
   final PixelGame game;
+  final Menu menu;
 
-  _SettingsOverlay({required this.game});
+  _SettingsOverlay({
+    required this.game,
+    required this.menu
+  });
+
+  late TextComponent placeholder;
+  late RectangleComponent placeholderBackground;
 
   @override
   FutureOr<void> onLoad() {
-    final textRenderer = TextPaint(
-      style: TextStyle(fontSize: 16, color: Colors.white)
+     final textRenderer = TextPaint(
+      style: TextStyle(
+        fontFamily: 'Daydream',
+        fontSize: 16, 
+        color: Color.fromARGB(255, 255, 255, 255),
+      ),
     );
     
-    size = Vector2(300, 200);
-    position = Vector2(game.size.x / 2 - 150, game.size.y / 2 - 100);
+    size = game.size;
+    position = Vector2.zero();
 
-    // background
-    add(RectangleComponent(
-      size: size,
-      paint: Paint()..color = Color(0xFF2D2B3E),
-    ));
+    // TODO: volume slider
 
-    // volume slider
-    // TODO: add slider logic
+    // TODO: mobile controls toggle
 
-    // mobile controls toggle
-    
-    final toggleText = TextComponent(
-      text: 'Mobile Controls: ${game.showControls ? 'ON' : 'OFF'}',
-      position: Vector2(20, 100),
+    placeholder = TextComponent(
+      text: 'Settings Coming Soon!',
+      position: Vector2(size.x / 2, size.y / 2),
       textRenderer: textRenderer,
+      anchor: Anchor.center
     );
 
-    final toggleButton = SettingsButton(
-      game: game, 
-      textComponent: toggleText, 
-      position: Vector2(200, 100), 
-      size: Vector2(50, 30)
+    placeholderBackground = RectangleComponent(
+      position: placeholder.position.clone(),
+      size: placeholder.size + Vector2(50, 20),
+      paint: Paint()..color = Colors.black.withAlpha(150),
+      anchor: Anchor.center,
     );
-
-    final closeButton = CloseButton(
-      sprite: Sprite(game.images.fromCache('Menu/Buttons/Close.png')),
-      position: Vector2(game.size.x - 40, 10), 
-      size: Vector2.all(30), 
-      onTap: () => removeFromParent(),
-    );
-
-    addAll([toggleText, toggleButton, closeButton]);
+    
+    game.addAll([placeholderBackground, placeholder]);
 
     return super.onLoad();
+  }
+
+  @override
+  void onGameResize(Vector2 size) {
+    placeholder.position = size / 2;
+    placeholderBackground.position = size / 2;
+    super.onGameResize(size);
   }
 }
 

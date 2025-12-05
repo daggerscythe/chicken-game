@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flame/collisions.dart';
 import 'package:flame/components.dart';
 import 'package:flame_audio/flame_audio.dart';
+import 'package:platformer/components/custom_hitbox.dart';
 import 'package:platformer/components/player.dart';
 import 'package:platformer/pixel_game.dart';
 
@@ -24,21 +25,27 @@ class Fire extends SpriteAnimationGroupComponent with HasGameReference<PixelGame
   late final SpriteAnimation _shieldedAnimation;
   late final SpriteAnimation _hitAnimation;
 
-  int health = 10;
+  int health = 2; // TODO: for presentation only
   bool shielded = false;
   bool isShieldAnimating = false;
   bool recentlyHit = false;
   double shieldCooldown = 5; // seconds
   double shieldTimer = 0;
+  CustomHitbox hitbox = CustomHitbox(
+    offsetX: 20,
+    offsetY: 20,
+    width: 50,
+    height: 50,
+  );
 
   @override
   FutureOr<void> onLoad() {
     priority = -10;
-    debugMode = true;
+    // debugMode = true;
     player = game.player;
     add(RectangleHitbox(
-      position: Vector2.zero(),
-      size: Vector2.all(96),
+      position: Vector2(hitbox.offsetX, hitbox.offsetY),
+      size: Vector2(hitbox.width, hitbox.height),
     ));
     _loadAllAnimations();
     return super.onLoad();
@@ -90,17 +97,23 @@ class Fire extends SpriteAnimationGroupComponent with HasGameReference<PixelGame
     if (!shielded) {
       if (recentlyHit) return; // prevents spamming
 
-      health -= 10; //TODO: this is just for debugging
+      health--;
       recentlyHit = true;
 
       if (game.playSounds) FlameAudio.play('hit.wav', volume: game.soundVolume);
+      
+      animationTicker?.reset();
+      isShieldAnimating = false;
+
       current = FireState.hit;
       await animationTicker?.completed;
       animationTicker?.reset();
 
       if (health <= 0) {
         removeFromParent();
-        player.levelComplete();
+        player.levelComplete();  
+      } else {
+        current = FireState.idle;
       }
 
       const hitCooldown = Duration(milliseconds: 500);

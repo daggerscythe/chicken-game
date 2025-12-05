@@ -67,9 +67,9 @@
   </object>
   <object id="32" name="Saw" type="Saw" x="128" y="128" width="32" height="32">
    <properties>
-    <property name="isVertical" type="bool" value="false"/>
-    <property name="offsetNeg" type="float" value="5"/>
-    <property name="offsetPos" type="float" value="6"/>
+    <property name="isVertical" type="bool" value="true"/>
+    <property name="offsetNeg" type="float" value="6"/>
+    <property name="offsetPos" type="float" value="5"/>
    </properties>
   </object>
   <object id="33" name="Saw" type="Saw" x="480" y="128" width="32" height="32">
@@ -79,7 +79,7 @@
     <property name="offsetPos" type="float" value="5"/>
    </properties>
   </object>
-  <object id="46" name="Heal" type="Heal" x="192" y="144" width="32" height="32"/>
-  <object id="47" name="Heal" type="Heal" x="416" y="144" width="32" height="32"/>
+  <object id="46" name="Heal" type="Heal" x="182.5" y="144" width="32" height="32"/>
+  <object id="47" name="Heal" type="Heal" x="424" y="144.5" width="32" height="32"/>
  </objectgroup>
 </map>

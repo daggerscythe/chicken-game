@@ -52,8 +52,6 @@ class HealManager extends Component with HasGameReference<PixelGame> {
       position: spawnPosition,
       size: Vector2.all(20),
     );
-
-    // game.currentLevel?.add(heal);
     parent!.add(heal);
     activeHeals.add(heal);
   }

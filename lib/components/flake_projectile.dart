@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flame/collisions.dart';
 import 'package:flame/components.dart';
+import 'package:platformer/components/collision_block.dart';
 import 'package:platformer/components/player.dart';
 import 'package:platformer/pixel_game.dart';
 
@@ -17,13 +18,14 @@ class FlakeProjectile extends SpriteComponent with HasGameReference<PixelGame>, 
   }) : super (    
     position: startPosition,
     size: Vector2.all(32),
-    // anchor: Anchor.center,
+    anchor: Anchor.center,
   );
+
   static const speed = 200.0;
 
   @override
   FutureOr<void> onLoad() {
-    debugMode = true;
+    // debugMode = true;
     priority = 10;
     sprite = Sprite(game.images.fromCache('Enemies/$flakeType/Flakes (32x32).png'));
     add(RectangleHitbox());
@@ -32,7 +34,6 @@ class FlakeProjectile extends SpriteComponent with HasGameReference<PixelGame>, 
 
   @override
   void update(double dt) {
-    // print("Zoom is ${game.cam.viewfinder.zoom}");
     position += direction * speed * dt;
 
     if (!game.cam.visibleWorldRect.overlaps(toRect())) removeFromParent();
@@ -45,6 +46,7 @@ class FlakeProjectile extends SpriteComponent with HasGameReference<PixelGame>, 
       other.collidedWithEnemy();  
       removeFromParent();
     }
+    if (other is CollisionBlock) removeFromParent();
     super.onCollisionStart(intersectionPoints, other);
   }
 }

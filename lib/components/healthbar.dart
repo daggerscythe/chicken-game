@@ -12,6 +12,7 @@ class HealthBar extends PositionComponent with HasGameReference<PixelGame> {
   HealthBar({required this.player});
 
   final double margin = 36.0;
+  int _currentHealth = 0;
 
   @override
   FutureOr<void> onLoad() {
@@ -29,8 +30,6 @@ class HealthBar extends PositionComponent with HasGameReference<PixelGame> {
     super.update(dt);
   }
 
-  int _currentHealth = 0;
-
   void _updateHearts() {
     // remove old hearts
     for (final heart in hearts) {
@@ -40,7 +39,7 @@ class HealthBar extends PositionComponent with HasGameReference<PixelGame> {
 
     for (int i = 0; i < player.maxLives; i++) {
       final heart = AnimatedHeart(
-        position: Vector2(i * margin, 32 / 2),
+        position: Vector2(i * margin, 16),
         isFull: i < player.currentLives,
       );
       add(heart);

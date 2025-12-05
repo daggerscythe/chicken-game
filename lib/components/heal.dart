@@ -18,7 +18,7 @@ class Heal extends SpriteAnimationComponent with HasGameReference<PixelGame>, Co
   @override
   FutureOr<void> onLoad() {
     // debugMode = true;
-    priority = -1; // keeps fruits behind the player
+    priority = -1; // keeps heal behind the player
 
     add(RectangleHitbox(
       collisionType: CollisionType.passive, // checks collision with player, not each other

@@ -31,7 +31,7 @@ class Chicken extends SpriteAnimationGroupComponent with HasGameReference<PixelG
   double targetDirection = -1; // by default chicken faces left
   bool gotHit = false;
   bool canAttack = true;
-  int health = 5;
+  int health = 2; // TODO: for presentation only
   AttackHitbox? attackHitbox;
   CustomHitbox hitbox = CustomHitbox(
     offsetX: 0, 
@@ -48,7 +48,7 @@ class Chicken extends SpriteAnimationGroupComponent with HasGameReference<PixelG
 
   @override
   FutureOr<void> onLoad() {
-    debugMode = true;
+    // debugMode = true;
     player = game.player;
     add(RectangleHitbox(
       position: Vector2(hitbox.offsetX, hitbox.offsetY),
@@ -133,6 +133,8 @@ class Chicken extends SpriteAnimationGroupComponent with HasGameReference<PixelG
   void _updateState() {
     if (current == ChickenState.attacking) return;
 
+    _removeAttackHitbox();
+
     current = (velocity.x != 0) ? ChickenState.running : ChickenState.idle;
 
     if ((moveDirection > 0 && scale.x > 0) || 
@@ -163,7 +165,7 @@ class Chicken extends SpriteAnimationGroupComponent with HasGameReference<PixelG
     _removeAttackHitbox();
     canAttack = true;
 
-    health = health - 5; // TODO: this is just debug, change to -- later
+    health--;
     gotHit = true;
 
     if (health <= 0) {

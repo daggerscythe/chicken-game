@@ -3,10 +3,9 @@ import 'dart:async';
 import 'package:flame/collisions.dart';
 import 'package:flame/components.dart';
 import 'package:platformer/components/custom_hitbox.dart';
+import 'package:platformer/components/fire.dart';
 import 'package:platformer/components/player.dart';
 import 'package:platformer/pixel_game.dart';
-
-//TODO: add a splash effect on hit
 
 class Fireball extends SpriteAnimationComponent with HasGameReference<PixelGame>, CollisionCallbacks {
   
@@ -18,7 +17,7 @@ class Fireball extends SpriteAnimationComponent with HasGameReference<PixelGame>
   late final Player player;
   late final SpriteAnimation _popAnimation;
 
-  static const double lifetime = 2.5; //seconds
+  static const double lifetime = 3; //seconds
   static const double moveSpeed = 100;
   static const double stepTime = 0.05;
   static const int amount = 16;
@@ -51,7 +50,7 @@ class Fireball extends SpriteAnimationComponent with HasGameReference<PixelGame>
         loop: false,
       ),
     );
-    debugMode = true;
+    // debugMode = true;
     player = game.player;
     add(RectangleHitbox(
       position: Vector2(hitbox.offsetX, hitbox.offsetY),
@@ -71,6 +70,8 @@ class Fireball extends SpriteAnimationComponent with HasGameReference<PixelGame>
     }
 
     if (!isPopping) _chasePlayer(dt);
+
+    if (parent!.children.whereType<Fire>().length == 0) _popFireball();
 
     super.update(dt);
   }
@@ -92,7 +93,6 @@ class Fireball extends SpriteAnimationComponent with HasGameReference<PixelGame>
     // direction the fireball is facing
     scale.x = (direction.x > 0) ? 1 : -1;
     
-    // move towards player
     position += direction * moveSpeed * dt;
   }
 
