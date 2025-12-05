@@ -25,7 +25,7 @@ class Heal extends SpriteAnimationComponent with HasGameReference<PixelGame>, Co
       )
     );
     animation = SpriteAnimation.fromFrameData(
-      game.images.fromCache('Items/Fruits/Heart.png'), 
+      game.images.fromCache('Items/Heart.png'), 
       SpriteAnimationData.sequenced(
         amount: 6, 
         stepTime: 0.08, 
@@ -40,7 +40,7 @@ class Heal extends SpriteAnimationComponent with HasGameReference<PixelGame>, Co
       collected = true;
       if (game.playSounds) FlameAudio.play('pickup.wav', volume: game.soundVolume);
       animation = SpriteAnimation.fromFrameData(
-        game.images.fromCache('Items/Fruits/Collected.png'), 
+        game.images.fromCache('Items/Collected.png'), 
         SpriteAnimationData.sequenced(
           amount: 6, 
           stepTime: stepTime, 

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.10" tiledversion="1.11.2" orientation="orthogonal" renderorder="right-down" width="40" height="23" tilewidth="16" tileheight="16" infinite="0" nextlayerid="4" nextobjectid="37">
+<map version="1.10" tiledversion="1.11.2" orientation="orthogonal" renderorder="right-down" width="40" height="23" tilewidth="16" tileheight="16" infinite="0" nextlayerid="4" nextobjectid="39">
  <tileset firstgid="1" source="ChickenGame.tsx"/>
  <layer id="1" name="background" width="40" height="23">
   <properties>
@@ -13,13 +13,13 @@
 112,112,25,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,23,112,112,
 112,112,25,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,23,112,112,
 112,112,25,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,23,112,112,
-112,112,25,101,102,102,103,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,101,102,102,103,23,112,112,
 112,112,25,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,23,112,112,
+112,112,25,101,102,102,103,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,101,102,102,103,23,112,112,
 112,112,25,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,23,112,112,
 112,112,25,0,0,0,0,0,0,101,102,102,103,0,0,0,0,0,0,0,0,0,0,0,0,0,0,101,102,102,103,0,0,0,0,0,0,23,112,112,
 112,112,25,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,23,112,112,
 112,112,25,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,23,112,112,
-112,112,25,0,0,0,0,0,0,0,0,0,0,0,101,102,102,103,0,0,0,0,101,102,102,103,0,0,0,0,0,0,0,0,0,0,0,23,112,112,
+112,112,25,0,0,0,0,0,0,0,0,0,0,0,62,63,63,64,0,0,0,0,62,63,63,64,0,0,0,0,0,0,0,0,0,0,0,23,112,112,
 112,112,25,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,23,112,112,
 112,112,25,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,72,73,74,75,0,0,0,0,0,74,75,0,0,0,0,0,0,0,23,112,112,
 112,112,25,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,6,0,0,0,0,23,112,112,
@@ -37,12 +37,12 @@
   <object id="12" x="32" y="48" width="16" height="272"/>
   <object id="13" x="592" y="48" width="16" height="272"/>
   <object id="14" x="48" y="272" width="544" height="48"/>
-  <object id="25" type="Block" x="48" y="112" width="64" height="16"/>
-  <object id="30" type="Block" x="528" y="112" width="64" height="16"/>
+  <object id="25" type="Block" x="48" y="128" width="64" height="16"/>
+  <object id="30" type="Block" x="528" y="128" width="64" height="16"/>
   <object id="31" type="Block" x="432" y="160" width="64" height="16"/>
-  <object id="33" type="Block" x="352" y="208" width="64" height="16"/>
-  <object id="34" type="Block" x="224" y="208" width="64" height="16"/>
   <object id="35" type="Block" x="144" y="160" width="64" height="16"/>
+  <object id="37" type="Platform" x="352" y="208" width="63.5" height="16"/>
+  <object id="38" type="Platform" x="224" y="208" width="63.5" height="16"/>
  </objectgroup>
  <objectgroup id="2" name="spawnpoints">
   <object id="5" name="ChefWithJacket" type="Player" x="304" y="240" width="32" height="32">
@@ -52,31 +52,17 @@
   </object>
   <object id="6" name="Salt" type="Shaker" x="512" y="176" width="64" height="96"/>
   <object id="7" name="Pepper" type="Shaker" x="64" y="176" width="64" height="96"/>
-  <object id="16" name="Heal" type="Heal" x="64" y="80" width="32" height="32"/>
+  <object id="16" name="Heal" type="Heal" x="64" y="96" width="32" height="32"/>
   <object id="17" name="Heal" type="Heal" x="160" y="128" width="32" height="32"/>
-  <object id="18" name="Heal" type="Heal" x="544" y="80" width="32" height="32"/>
+  <object id="18" name="Heal" type="Heal" x="544" y="96" width="32" height="32"/>
   <object id="19" name="Heal" type="Heal" x="448" y="128" width="32" height="32"/>
   <object id="20" name="Heal" type="Heal" x="368" y="176" width="32" height="32"/>
   <object id="21" name="Heal" type="Heal" x="240" y="176" width="32" height="32"/>
-  <object id="22" name="Saw" type="Saw" x="208" y="80" width="32" height="32">
+  <object id="23" name="Saw" type="Saw" x="304" y="80" width="32" height="32">
    <properties>
     <property name="isVertical" type="bool" value="false"/>
-    <property name="offsetNeg" type="float" value="6"/>
-    <property name="offsetPos" type="float" value="5"/>
-   </properties>
-  </object>
-  <object id="23" name="Saw" type="Saw" x="400" y="80" width="32" height="32">
-   <properties>
-    <property name="isVertical" type="bool" value="false"/>
-    <property name="offsetNeg" type="float" value="5"/>
-    <property name="offsetPos" type="float" value="6"/>
-   </properties>
-  </object>
-  <object id="36" name="Saw" type="Saw" x="304" y="112" width="32" height="32">
-   <properties>
-    <property name="isVertical" type="bool" value="true"/>
-    <property name="offsetNeg" type="float" value="4"/>
-    <property name="offsetPos" type="float" value="5"/>
+    <property name="offsetNeg" type="float" value="7"/>
+    <property name="offsetPos" type="float" value="7"/>
    </properties>
   </object>
  </objectgroup>

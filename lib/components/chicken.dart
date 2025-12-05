@@ -5,6 +5,7 @@ import 'package:flame/collisions.dart';
 import 'package:flame/components.dart';
 import 'package:flame_audio/flame_audio.dart';
 import 'package:platformer/components/attack_hitbox.dart';
+import 'package:platformer/components/custom_hitbox.dart';
 import 'package:platformer/components/player.dart';
 import 'package:platformer/pixel_game.dart';
 
@@ -14,7 +15,6 @@ class Chicken extends SpriteAnimationGroupComponent with HasGameReference<PixelG
 
   Chicken({
     super.position, // shortcut for constructors
-    super.size, // shortcut for constructors
   }); 
 
   static const stepTime = 0.05;
@@ -25,7 +25,7 @@ class Chicken extends SpriteAnimationGroupComponent with HasGameReference<PixelG
   final textureSize = Vector2(32, 34);
 
   Vector2 velocity = Vector2.zero();
-  double attackRange = 40;
+  double attackRange = 130;
   double chaseRange = 300;
   double moveDirection = 1;
   double targetDirection = -1; // by default chicken faces left
@@ -33,6 +33,12 @@ class Chicken extends SpriteAnimationGroupComponent with HasGameReference<PixelG
   bool canAttack = true;
   int health = 5;
   AttackHitbox? attackHitbox;
+  CustomHitbox hitbox = CustomHitbox(
+    offsetX: 0, 
+    offsetY: 0, 
+    width: 64, 
+    height: 64,
+  );
 
   late final Player player;
   late final SpriteAnimation _idleAnimation;
@@ -42,13 +48,14 @@ class Chicken extends SpriteAnimationGroupComponent with HasGameReference<PixelG
 
   @override
   FutureOr<void> onLoad() {
-    // debugMode = true;
+    debugMode = true;
     player = game.player;
     add(RectangleHitbox(
-      position: Vector2.zero(),
-      size: Vector2.all(64),
+      position: Vector2(hitbox.offsetX, hitbox.offsetY),
+      size: Vector2(hitbox.width, hitbox.height),
     ));
     _loadAllAnimations();
+    anchor = Anchor.topRight;
     return super.onLoad();
   }
 
@@ -62,10 +69,10 @@ class Chicken extends SpriteAnimationGroupComponent with HasGameReference<PixelG
   }
   
   void _loadAllAnimations() {
-    _idleAnimation = _spriteAnimation('Idle', 13, 32, 34);
-    _runningAnimation = _spriteAnimation('Run', 14, 32 ,34);
-    _hitAnimation = _spriteAnimation('Hit', 5, 32, 34)..loop = false;
-    _attackingAnimation = _spriteAnimation('Attack', 13, 40, 34)..loop = false;
+    _idleAnimation = _spriteAnimation('Idle', 12, 64, 64);
+    _runningAnimation = _spriteAnimation('Run', 14, 64, 64);
+    _hitAnimation = _spriteAnimation('Hit', 5, 64, 64)..loop = false;
+    _attackingAnimation = _spriteAnimation('Attack', 12, 100, 64)..loop = false;
 
     animations = {
       ChickenState.idle: _idleAnimation,
@@ -179,18 +186,22 @@ class Chicken extends SpriteAnimationGroupComponent with HasGameReference<PixelG
   void _attackPlayer() async {
     canAttack = false;
     current = ChickenState.attacking;
+
+    final hitboxDelay = const Duration(milliseconds: 400); // 50 ms for 8 frames
+
+    Future.delayed(hitboxDelay, () {
+      attackHitbox = AttackHitbox(
+        owner: this,
+        onHit: (other) {
+          if (other is Player) other.collidedWithEnemy();
+        },
+        position: Vector2(-20, 40),
+        size: Vector2(30, 30),
+      );
+
+      add(attackHitbox!);
+    });
  
-    attackHitbox = AttackHitbox(
-      owner: this,
-      onHit: (other) {
-        if (other is Player) other.collidedWithEnemy();
-      },
-      position: Vector2(-20, 40),
-      size: Vector2(30, 30),
-    );
-
-    add(attackHitbox!);
-
     await animationTicker?.completed;
 
     _removeAttackHitbox();

@@ -7,6 +7,7 @@ import 'package:platformer/components/collision_block.dart';
 import 'package:platformer/components/corner_fire.dart';
 import 'package:platformer/components/fire.dart';
 import 'package:platformer/components/heal.dart';
+import 'package:platformer/components/heal_manager.dart';
 import 'package:platformer/components/player.dart';
 import 'package:platformer/components/saw.dart';
 import 'package:platformer/components/shaker.dart';
@@ -22,6 +23,7 @@ class Level extends World with HasGameReference<PixelGame> {
   });
   late TiledComponent level;
   List<CollisionBlock> collisionBlocks = [];
+  HealManager healManager = HealManager();
 
   @override
   FutureOr<void> onLoad() async {
@@ -31,6 +33,10 @@ class Level extends World with HasGameReference<PixelGame> {
     _addBackground();
     _spawningObjects();
     _addCollisions();
+
+    add(healManager);
+
+    _spawnInitialHeals();
 
     return super.onLoad();
   }
@@ -66,11 +72,9 @@ class Level extends World with HasGameReference<PixelGame> {
             game.setPlayer(player);
             break;
           case 'Heal':
-            final heal = Heal(
-              position: Vector2(spawnPoint.x + 16, spawnPoint.y + 16),
-              size: Vector2(spawnPoint.width - 16, spawnPoint.height - 16),
+            healManager.addSpawnPoint(
+              Vector2(spawnPoint.x + 6, spawnPoint.y + 6)
             );
-            add(heal);
             break;
           case 'Saw':
             final isVertical = spawnPoint.properties.getValue('isVertical');
@@ -88,7 +92,6 @@ class Level extends World with HasGameReference<PixelGame> {
           case 'Chicken':
             final chicken = Chicken(
               position: Vector2(spawnPoint.x, spawnPoint.y),
-              size: Vector2(64, 64),
             );
             add(chicken);
             break;
@@ -153,6 +156,12 @@ class Level extends World with HasGameReference<PixelGame> {
       }
     }
     player.collisionBlocks = collisionBlocks; // makes the actor aware of the collisions
+  }
+  
+  void _spawnInitialHeals() {
+    for (int i = 0; i < HealManager.maxHeals && i < healManager.spawnPoints.length; i++) {
+      healManager.spawnHeal();
+    }
   }
 
 }

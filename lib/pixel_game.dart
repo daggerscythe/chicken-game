@@ -6,6 +6,7 @@ import 'package:flame/components.dart';
 import 'package:flame/game.dart';
 import 'package:platformer/components/healthbar.dart';
 import 'package:platformer/components/jump_button.dart';
+import 'package:platformer/components/menu.dart';
 
 import 'components/level.dart';
 import 'components/player.dart';
@@ -34,7 +35,7 @@ class PixelGame extends FlameGame
   FutureOr<void> onLoad() async {   
     await images.loadAllImages(); // use loadAll if you have many images for optimization
 
-    _loadLevel();
+    loadLevel();
 
     // for mobile controls
     if (showControls) {
@@ -94,15 +95,15 @@ class PixelGame extends FlameGame
   void loadNextLevel() {
     if (currentLevelIndex < levels.length - 1) {
       currentLevelIndex++;
-      _loadLevel();
+      loadLevel();
     } else {
       // loops through levels
       currentLevelIndex = 0;
-      _loadLevel();
+      loadLevel();
     }
   }
   
-  void _loadLevel() async {
+  void loadLevel() async {
     Future.delayed(const Duration(seconds: 1), () async {
       // remove old level
       currentLevel?.removeFromParent();
@@ -122,7 +123,18 @@ class PixelGame extends FlameGame
       cam.viewfinder.anchor = Anchor.topLeft;
       currentCamera = cam;
 
+      cam.viewport.removeWhere((c) => c is Menu); // avoid duplicates
+      final menu = Menu(game: this);
+      cam.viewport.add(menu);
+
       addAll([cam, world]);
+
+      await Future.delayed(Duration(milliseconds: 50));
+
+      
+
+      print("Camera viewport size: ${cam.viewport.size}");
+      print("Game size: ${size}");
 
       await Future.delayed(Duration(milliseconds: 100));
     });
@@ -135,6 +147,8 @@ class PixelGame extends FlameGame
     cam.viewport.removeWhere((component) => component is HealthBar);
     final health = HealthBar(player: player)..position = Vector2(60, 5);
     cam.viewport.add(health);
+
+    
   }
   
 }
