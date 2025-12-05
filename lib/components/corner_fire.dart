@@ -40,7 +40,7 @@ class CornerFire extends SpriteAnimationComponent with HasGameReference<PixelGam
     cooldownTimer += dt;
 
     if (cooldownTimer >= shootCooldown) {
-      // _shootFireballs();
+      _shootFireballs();
       cooldownTimer = 0;
     }
 
