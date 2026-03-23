@@ -51,7 +51,7 @@ class Fireball extends SpriteAnimationComponent with HasGameReference<PixelGame>
       ),
     );
     // debugMode = true;
-    player = game.player;
+    player = game.player!;
     add(RectangleHitbox(
       position: Vector2(hitbox.offsetX, hitbox.offsetY),
       size: Vector2(hitbox.width, hitbox.height),

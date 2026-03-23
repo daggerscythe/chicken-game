@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flame/components.dart';
 import 'package:flame/events.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:platformer/pixel_game.dart';
 
 class Menu extends PositionComponent with HasGameReference<PixelGame>, TapCallbacks {
@@ -15,7 +16,7 @@ class Menu extends PositionComponent with HasGameReference<PixelGame>, TapCallba
   late SpriteComponent settingsButton;
 
   _LevelsOverlay? _levelsOverlay;
-  _SettingsOverlay? _settingsOverlay;
+  SettingsOverlay? _settingsOverlay;
 
   @override
   FutureOr<void> onLoad() {
@@ -64,17 +65,13 @@ class Menu extends PositionComponent with HasGameReference<PixelGame>, TapCallba
 
   void _toggleSettings() {
     if (_settingsOverlay == null || !_settingsOverlay!.isMounted) {
-      // create a new overlay
-      _settingsOverlay = _SettingsOverlay(game: game, menu: this);
+      _settingsOverlay = SettingsOverlay(game: game, menu: this);
       game.cam.viewport.add(_settingsOverlay!);
     } else {
-      // hide overlay
-      _settingsOverlay!.placeholder.removeFromParent();
-      _settingsOverlay!.placeholderBackground.removeFromParent();
+      _settingsOverlay!.removeFromParent();
       _settingsOverlay = null;
     }
   }
-
 }
 
 class _LevelsOverlay extends PositionComponent {
@@ -109,11 +106,11 @@ class _LevelsOverlay extends PositionComponent {
   }
 }
 
-class _SettingsOverlay extends PositionComponent with TapCallbacks {
+class SettingsOverlay extends PositionComponent with TapCallbacks, KeyboardHandler, HasGameReference<PixelGame> {
   final PixelGame game;
   final Menu menu;
 
-  _SettingsOverlay({
+  SettingsOverlay({
     required this.game,
     required this.menu
   });
@@ -121,47 +118,84 @@ class _SettingsOverlay extends PositionComponent with TapCallbacks {
   late TextComponent placeholder;
   late RectangleComponent placeholderBackground;
 
+  static const double _vpWidth = 640;
+  static const double _vpHeight = 360;
+
   @override
   FutureOr<void> onLoad() {
+    priority = 1000;
+    size = Vector2(_vpWidth, _vpHeight);
+    position = Vector2.zero();
+
      final textRenderer = TextPaint(
       style: TextStyle(
         fontFamily: 'Daydream',
         fontSize: 16, 
-        color: Color.fromARGB(255, 255, 255, 255),
+        color: Color(0XFFFFFFFF),
       ),
     );
-    
-    size = game.size;
-    position = Vector2.zero();
 
-    // TODO: volume slider
-
-    // TODO: mobile controls toggle
-
-    placeholder = TextComponent(
-      text: 'Settings Coming Soon!',
-      position: Vector2(size.x / 2, size.y / 2),
-      textRenderer: textRenderer,
-      anchor: Anchor.center
-    );
-
-    placeholderBackground = RectangleComponent(
-      position: placeholder.position.clone(),
-      size: placeholder.size + Vector2(50, 20),
-      paint: Paint()..color = Colors.black.withAlpha(150),
+    // dim background panel
+    add(RectangleComponent(
+      position: Vector2(_vpWidth / 2, _vpHeight / 2),
+      size: Vector2(220, 100),
       anchor: Anchor.center,
-    );
-    
-    game.addAll([placeholderBackground, placeholder]);
+      paint: Paint()..color = Colors.black.withAlpha(180),
+    ));
+
+    // title
+    add(TextComponent(
+      text: 'Settings',
+      textRenderer: textRenderer,
+      position: Vector2(size.x / 2, size.y / 2 - 35),
+      anchor: Anchor.center,
+    ));
+
+    // volume label
+    add(TextComponent(
+      text: 'Volume',
+      textRenderer: textRenderer,
+      position: Vector2(size.x / 2 - 80, size.y / 2 - 10),
+      anchor: Anchor.centerLeft,
+    ));
+
+    // slider
+    add(VolumeSlider(
+      game: game,
+      position: Vector2(size.x / 2 - 80, size.y / 2 + 15),
+      sliderWidth: 160,
+    ));
+
+    // close button
+    add(MenuSpriteButton(
+      sprite: Sprite(game.images.fromCache('Menu/Buttons/Close.png')),
+      position: Vector2(size.x / 2 + 95, size.y / 2 - 45),
+      size: Vector2.all(16),
+      onPressed: removeFromParent,
+    ));
 
     return super.onLoad();
   }
 
   @override
-  void onGameResize(Vector2 size) {
-    placeholder.position = size / 2;
-    placeholderBackground.position = size / 2;
-    super.onGameResize(size);
+  bool onKeyEvent(KeyEvent event, Set<LogicalKeyboardKey> keysPressed) {
+    if (event is KeyDownEvent && 
+        event.logicalKey == LogicalKeyboardKey.escape) {
+      removeFromParent();
+      menu._settingsOverlay = null;
+      return true;
+    }
+    return false;
+  }
+
+  // make only the menu interactive, otherwise it takes up
+  // full screen and makes other buttons un-tappable 
+  @override
+  bool containsLocalPoint(Vector2 point) {
+    final panelTopLeft = Vector2(_vpWidth / 2 - 110, _vpHeight / 2 - 50);
+    final panelBottomRight = Vector2(_vpWidth / 2 + 110, _vpHeight / 2 + 50);
+    return point.x >= panelTopLeft.x && point.x <= panelBottomRight.x &&
+          point.y >= panelTopLeft.y && point.y <= panelBottomRight.y;
   }
 }
 
@@ -253,4 +287,74 @@ class CloseButton extends SpriteComponent with TapCallbacks {
 
   @override
   void onTapDown(TapDownEvent event) => onTap();
+}
+
+class VolumeSlider extends PositionComponent with DragCallbacks, HasGameReference<PixelGame> {
+  final PixelGame game;
+  final double sliderWidth;
+
+  static const double _trackHeight = 4;
+  static const double _knobRadius = 8;
+  static const double _hitPadding = 16;
+
+  late RectangleComponent _filledTrack;
+  late CircleComponent _knob;
+
+  VolumeSlider({
+    required this.game,
+    required super.position,
+    required this.sliderWidth,
+  }) : super(size: Vector2(sliderWidth, _knobRadius * 2 + _hitPadding));
+
+  @override
+  FutureOr<void> onLoad() {
+    // empty track
+    add(RectangleComponent(
+      position: Vector2(0, size.y / 2 - _trackHeight / 2),
+      size: Vector2(sliderWidth, _trackHeight),
+      paint: Paint()..color = Colors.white24,
+    ));
+
+    final initialX = game.soundVolume.clamp(0.0, 1.0) * sliderWidth;
+
+    // filled portion
+    _filledTrack = RectangleComponent(
+      position: Vector2(0, size.y / 2 - _trackHeight / 2),
+      size: Vector2(initialX, _trackHeight),
+      paint: Paint()..color = Colors.white,
+    );
+    add(_filledTrack);
+
+    // knob
+    _knob = CircleComponent(
+      radius: _knobRadius,
+      position: Vector2(initialX, size.y / 2),
+      anchor: Anchor.center,
+      paint: Paint()..color = Colors.white,
+    );
+    add(_knob);
+
+    return super.onLoad();
+  }
+
+  void _updateFromX(double localX) {
+    final clamped = localX.clamp(0.0, sliderWidth);
+    game.soundVolume = clamped / sliderWidth;
+    _filledTrack.size = Vector2(clamped, _trackHeight);
+    _knob.position = Vector2(clamped, size.y / 2);
+  }
+
+  @override
+  void onDragStart(DragStartEvent event) {
+    _updateFromX(event.localPosition.x);
+    super.onDragStart(event);
+  }
+
+  @override
+  void onDragUpdate(DragUpdateEvent event) {
+    final currentX = game.soundVolume.clamp(0.0, 1.0) * sliderWidth;
+    _updateFromX(currentX + event.canvasDelta.x);
+    super.onDragUpdate(event);
+  }
+
 }

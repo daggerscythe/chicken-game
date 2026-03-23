@@ -49,7 +49,7 @@ class Chicken extends SpriteAnimationGroupComponent with HasGameReference<PixelG
   @override
   FutureOr<void> onLoad() {
     // debugMode = true;
-    player = game.player;
+    player = game.player!;
     add(RectangleHitbox(
       position: Vector2(hitbox.offsetX, hitbox.offsetY),
       size: Vector2(hitbox.width, hitbox.height),

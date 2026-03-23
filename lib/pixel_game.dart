@@ -6,6 +6,7 @@ import 'package:flame/components.dart';
 import 'package:flame/game.dart';
 import 'package:platformer/components/healthbar.dart';
 import 'package:platformer/components/jump_button.dart';
+import 'package:platformer/components/attack_button.dart';
 import 'package:platformer/components/menu.dart';
 
 import 'components/level.dart';
@@ -24,12 +25,12 @@ class PixelGame extends FlameGame
   late JoystickComponent joystick;
   Level? currentLevel;
   CameraComponent? currentCamera;
-  bool showControls = false; // TODO: be able to flip in settings
+  bool showControls = false; // TODO: flip for mobile package
   bool playSounds = true;
   double soundVolume = 0.05; // TODO: be able to set in settings
   List<String> levels = ['level_01', 'level_02', 'level_03']; 
   int currentLevelIndex = 0;
-  late Player player;
+  late Player? player;
   
   @override
   FutureOr<void> onLoad() async {   
@@ -41,6 +42,7 @@ class PixelGame extends FlameGame
     if (showControls) {
       addJoystick();
       add(JumpButton());
+      add(AttackButton());
     }
 
     return super.onLoad();
@@ -75,19 +77,22 @@ class PixelGame extends FlameGame
   }
   
   void updateJoystick() {
+    final p = player;
+    if (p == null) return;
+
     switch (joystick.direction) {
       case JoystickDirection.left:
       case JoystickDirection.upLeft:
       case JoystickDirection.downLeft:
-        player.horizontalMovement = -1;
+        p.horizontalMovement = -1;
         break;
       case JoystickDirection.right:
       case JoystickDirection.upRight:
       case JoystickDirection.downRight:
-        player.horizontalMovement = 1;
+        p.horizontalMovement = 1;
         break;
       default:
-        player.horizontalMovement = 0;
+        p.horizontalMovement = 0;
         break;
     }
   }
@@ -138,10 +143,7 @@ class PixelGame extends FlameGame
 
     // refresh health bar
     cam.viewport.removeWhere((component) => component is HealthBar);
-    final health = HealthBar(player: player)..position = Vector2(60, 5);
+    final health = HealthBar(player: player!)..position = Vector2(60, 5);
     cam.viewport.add(health);
-
-    
-  }
-  
+  }  
 }
